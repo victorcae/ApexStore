@@ -1,591 +1,409 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ApexDynamics — Racing Data Intelligence</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --red: #E8001D;
-      --red-dim: #a0001466;
-      --bg: #050508;
-      --bg2: #0a0a10;
-      --surface: #0f0f18;
-      --border: #1e1e2e;
-      --text: #e8e8f0;
-      --muted: #6b6b80;
-      --accent: #ff2d4a;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
-    }
-
-    /* ── NOISE OVERLAY ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.4;
-    }
-
-    /* ── NAV ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.2rem 4rem;
-      background: rgba(5,5,8,0.85);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .logo {
-      font-family: 'Orbitron', monospace;
-      font-weight: 900;
-      font-size: 1.3rem;
-      letter-spacing: 0.08em;
-      color: var(--text);
-    }
-
-    .logo span { color: var(--red); }
-
-    nav ul {
-      display: flex;
-      gap: 2.5rem;
-      list-style: none;
-    }
-
-    nav ul a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      transition: color 0.2s;
-    }
-
-    nav ul a:hover { color: var(--text); }
-
-    .nav-cta {
-      background: var(--red);
-      color: #fff !important;
-      padding: 0.55rem 1.4rem;
-      border-radius: 2px;
-      font-weight: 600 !important;
-      transition: background 0.2s !important;
-    }
-
-    .nav-cta:hover { background: #c0001a !important; color: #fff !important; }
-
-    /* ── HERO ── */
-    #hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      position: relative;
-      padding: 8rem 4rem 4rem;
-      overflow: hidden;
-    }
-
-    .hero-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(232,0,29,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(232,0,29,0.06) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-    }
-
-    .hero-glow {
-      position: absolute;
-      width: 700px;
-      height: 700px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(232,0,29,0.12) 0%, transparent 70%);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    .hero-content {
-      max-width: 780px;
-      position: relative;
-      z-index: 2;
-      animation: fadeUp 1s ease both;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(232,0,29,0.1);
-      border: 1px solid rgba(232,0,29,0.3);
-      color: var(--red);
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      padding: 0.4rem 1rem;
-      border-radius: 2px;
-      margin-bottom: 2rem;
-    }
-
-    .hero-badge::before {
-      content: '';
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--red);
-      animation: pulse 1.5s infinite;
-    }
-
-    h1 {
-      font-family: 'Orbitron', monospace;
-      font-size: clamp(2.8rem, 6vw, 5.5rem);
-      font-weight: 900;
-      line-height: 1.0;
-      letter-spacing: -0.01em;
-      margin-bottom: 1.5rem;
-    }
-
-    h1 em {
-      font-style: normal;
-      color: var(--red);
-      display: block;
-    }
-
-    .hero-sub {
-      font-size: 1.1rem;
-      color: var(--muted);
-      line-height: 1.7;
-      max-width: 520px;
-      margin-bottom: 3rem;
-      font-weight: 300;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.6rem;
-      background: var(--red);
-      color: #fff;
-      padding: 0.9rem 2rem;
-      border-radius: 2px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-decoration: none;
-      transition: background 0.2s, transform 0.2s;
-    }
-
-    .btn-primary:hover { background: #c0001a; transform: translateY(-1px); }
-
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.6rem;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.9rem 2rem;
-      border-radius: 2px;
-      font-weight: 500;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-decoration: none;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-
-    .btn-secondary:hover { border-color: var(--muted); transform: translateY(-1px); }
-
-    /* ── STATS BAR ── */
-    .stats-bar {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 2rem 4rem;
-      display: flex;
-      justify-content: center;
-      gap: 5rem;
-    }
-
-    .stat {
-      text-align: center;
-    }
-
-    .stat-value {
-      font-family: 'Orbitron', monospace;
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--red);
-    }
-
-    .stat-label {
-      font-size: 0.72rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      margin-top: 0.3rem;
-    }
-
-    /* ── SECTIONS COMMON ── */
-    section { padding: 7rem 4rem; }
-
-    .section-tag {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--red);
-      margin-bottom: 1rem;
-    }
-
-    .section-title {
-      font-family: 'Orbitron', monospace;
-      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-      font-weight: 700;
-      line-height: 1.15;
-      margin-bottom: 1.2rem;
-    }
-
-    .section-sub {
-      color: var(--muted);
-      font-size: 1rem;
-      line-height: 1.7;
-      max-width: 540px;
-      font-weight: 300;
-    }
-
-    /* ── FEATURES ── */
-    #features { background: var(--bg2); }
-
-    .features-header {
-      max-width: 1200px;
-      margin: 0 auto 4rem;
-    }
-
-    .features-grid {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5px;
-      background: var(--border);
-      border: 1px solid var(--border);
-    }
-
-    .feature-card {
-      background: var(--surface);
-      padding: 2.5rem;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.3s;
-    }
-
-    .feature-card:hover { background: #131320; }
-
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--red);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s;
-    }
-
-    .feature-card:hover::before { transform: scaleX(1); }
-
-    .feature-icon {
-      width: 48px; height: 48px;
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 1.5rem;
-      font-size: 1.4rem;
-    }
-
-    .feature-title {
-      font-family: 'Orbitron', monospace;
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.8rem;
-    }
-
-    .feature-desc {
-      color: var(--muted);
-      font-size: 0.88rem;
-      line-height: 1.65;
-    }
-
-    /* ── DASHBOARD PREVIEW ── */
-    #preview {
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      gap: 5rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 7rem 4rem;
-    }
-
-    #preview .content { flex: 1; }
-
-    .dashboard-mock {
-      flex: 1.2;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .mock-topbar {
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      padding: 0.8rem 1.2rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
-
-    .mock-body { padding: 1.5rem; }
-
-    .mock-title {
-      font-family: 'Orbitron', monospace;
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 0.15em;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-    }
-
-    .mock-chart {
-      height: 120px;
-      display: flex;
-      align-items: flex-end;
-      gap: 6px;
-      margin-bottom: 1rem;
-    }
-
-    .mock-bar {
-      flex: 1;
-      border-radius: 2px 2px 0 0;
-      background: linear-gradient(to top, var(--red), rgba(232,0,29,0.3));
-      animation: barGrow 1s ease both;
-    }
-
-    .mock-metrics {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.8rem;
-    }
-
-    .mock-metric {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      padding: 0.8rem;
-    }
-
-    .mock-metric-val {
-      font-family: 'Orbitron', monospace;
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--red);
-    }
-
-    .mock-metric-lbl {
-      font-size: 0.6rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin-top: 0.2rem;
-    }
-
-    /* ── DOWNLOAD ── */
-    #download {
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-    }
-
-    .download-inner {
-      max-width: 900px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .download-steps {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 2rem;
-      align-items: center;
-      margin: 4rem 0;
-    }
-
-    .dl-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 2.5rem 2rem;
-      position: relative;
-      transition: border-color 0.3s;
-    }
-
-    .dl-card:hover { border-color: var(--red); }
-
-    .dl-step {
-      position: absolute;
-      top: -14px; left: 50%;
-      transform: translateX(-50%);
-      background: var(--red);
-      color: #fff;
-      font-family: 'Orbitron', monospace;
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      padding: 0.25rem 0.8rem;
-    }
-
-    .dl-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-
-    .dl-name {
-      font-family: 'Orbitron', monospace;
-      font-size: 0.85rem;
-      font-weight: 700;
-      margin-bottom: 0.6rem;
-      letter-spacing: 0.05em;
-    }
-
-    .dl-desc {
-      color: var(--muted);
-      font-size: 0.8rem;
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
-    }
-
-    .dl-arrow {
-      font-size: 2rem;
-      color: var(--red);
-      font-weight: 300;
-    }
-
-    .dl-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: transparent;
-      border: 1px solid var(--red);
-      color: var(--red);
-      padding: 0.7rem 1.5rem;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-decoration: none;
-      border-radius: 2px;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-      font-family: inherit;
-    }
-
-    .dl-btn:hover { background: var(--red); color: #fff; }
-
-    .dl-btn.primary-dl {
-      background: var(--red);
-      color: #fff;
-    }
-
-    .dl-btn.primary-dl:hover { background: #c0001a; }
-
-    /* ── FOOTER ── */
-    footer {
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      padding: 3rem 4rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .footer-logo {
-      font-family: 'Orbitron', monospace;
-      font-weight: 900;
-      font-size: 1rem;
-      letter-spacing: 0.08em;
-    }
-
-    .footer-logo span { color: var(--red); }
-
-    footer p {
-      color: var(--muted);
-      font-size: 0.78rem;
-    }
-
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    @keyframes barGrow {
-      from { transform: scaleY(0); transform-origin: bottom; }
-      to   { transform: scaleY(1); }
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      nav { padding: 1rem 1.5rem; }
-      nav ul { display: none; }
-      #hero { padding: 6rem 1.5rem 3rem; }
-      section { padding: 4rem 1.5rem; }
-      .stats-bar { gap: 2rem; padding: 1.5rem; flex-wrap: wrap; }
-      .features-grid { grid-template-columns: 1fr; }
-      #preview { flex-direction: column; padding: 4rem 1.5rem; gap: 3rem; }
-      .download-steps { grid-template-columns: 1fr; }
-      .dl-arrow { transform: rotate(90deg); }
-      footer { flex-direction: column; gap: 1rem; text-align: center; }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ApexDynamics — Racing Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,200;0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --black: #000000;
+  --white: #f5f5f7;
+  --red: #ff2d2d;
+  --red2: #ff6b6b;
+  --gray1: #1d1d1f;
+  --gray2: #2d2d2f;
+  --gray3: #6e6e73;
+  --gray4: #aeaeb2;
+}
+html { scroll-behavior: smooth; }
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* CURSOR */
+#cursor {
+  width: 10px; height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  position: fixed; pointer-events: none; z-index: 99999;
+  transform: translate(-50%,-50%);
+  transition: transform 0.15s, background 0.2s;
+}
+#cursor-ring {
+  width: 34px; height: 34px;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 50%;
+  position: fixed; pointer-events: none; z-index: 99998;
+  transform: translate(-50%,-50%);
+  transition: all 0.22s cubic-bezier(.23,1,.32,1);
+}
+
+/* NAV */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:1000;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+  transition: background 0.3s;
+}
+.nav-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700; font-size: 1.1rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.nav-logo span { color: var(--red); }
+nav ul { display: flex; gap: 2rem; list-style: none; }
+nav ul a {
+  color: rgba(245,245,247,0.7); text-decoration: none;
+  font-size: 0.78rem; font-weight: 400; letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+nav ul a:hover { color: #fff; }
+.nav-cta {
+  background: var(--red); color: #fff !important;
+  padding: 0.35rem 1.1rem; border-radius: 980px;
+  font-weight: 500 !important; transition: background 0.2s !important;
+}
+.nav-cta:hover { background: #d01818 !important; }
+
+/* HERO */
+#hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 0 2rem;
+  position: relative; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 100% 70% at 50% 60%, rgba(255,45,45,0.16) 0%, transparent 65%);
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,45,45,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,45,45,0.05) 1px, transparent 1px);
+  background-size: 70px 70px;
+  animation: gridDrift 25s linear infinite;
+}
+@keyframes gridDrift { to { transform: translateY(70px); } }
+
+.hero-orb {
+  position: absolute; width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(255,45,45,0.13) 0%, transparent 65%);
+  border-radius: 50%; top:50%; left:50%;
+  transform: translate(-50%,-50%);
+  animation: pulse 7s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7} 50%{transform:translate(-50%,-50%) scale(1.2);opacity:1} }
+
+.hero-eyebrow {
+  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--red);
+  margin-bottom: 1.5rem;
+  opacity: 0; animation: fadeUp 1s 0.3s ease both;
+}
+h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(4rem, 11vw, 10rem);
+  font-weight: 700; line-height: 0.92; letter-spacing: -0.02em;
+  margin-bottom: 1.8rem;
+  opacity: 0; animation: fadeUp 1s 0.5s ease both;
+}
+h1 .grad {
+  display: block;
+  background: linear-gradient(135deg, #fff 0%, #ff9999 45%, var(--red) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.2rem); font-weight: 300; color: var(--gray4);
+  max-width: 520px; line-height: 1.65; margin-bottom: 3rem;
+  opacity: 0; animation: fadeUp 1s 0.7s ease both;
+}
+.hero-btns {
+  display: flex; gap: 0.85rem; flex-wrap: wrap; justify-content: center;
+  opacity: 0; animation: fadeUp 1s 0.9s ease both;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.8rem 1.8rem; border-radius: 980px;
+  font-size: 0.88rem; font-weight: 500; text-decoration: none;
+  transition: all 0.3s cubic-bezier(.23,1,.32,1);
+}
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { background: #d01818; transform: scale(1.04); }
+.btn-outline {
+  background: rgba(255,255,255,0.07); color: #fff;
+  border: 0.5px solid rgba(255,255,255,0.15);
+}
+.btn-outline:hover { background: rgba(255,255,255,0.13); transform: scale(1.04); }
+
+.scroll-hint {
+  position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  color: var(--gray3); font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase;
+  opacity: 0; animation: fadeUp 1s 1.3s ease both, nudge 2.5s 2.5s ease-in-out infinite;
+}
+.scroll-hint::after { content:''; width:1px; height:36px; background: linear-gradient(to bottom, var(--gray3), transparent); }
+@keyframes nudge { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(7px)} }
+
+/* MARQUEE */
+.marquee-wrap {
+  overflow: hidden; padding: 1.2rem 0;
+  border-top: 0.5px solid rgba(255,255,255,0.07);
+  border-bottom: 0.5px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.015);
+}
+.marquee-inner {
+  display: flex; gap: 3.5rem; width: max-content;
+  animation: slide 22s linear infinite;
+}
+.marquee-inner span {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray3);
+  white-space: nowrap;
+}
+.marquee-inner em { color: var(--red); font-style: normal; }
+@keyframes slide { to { transform: translateX(-50%); } }
+
+/* SCROLL REVEAL */
+.reveal { opacity:0; transform:translateY(45px); transition: opacity 0.9s cubic-bezier(.23,1,.32,1), transform 0.9s cubic-bezier(.23,1,.32,1); }
+.reveal.in { opacity:1; transform:translateY(0); }
+.d1{transition-delay:.1s} .d2{transition-delay:.2s} .d3{transition-delay:.3s} .d4{transition-delay:.4s}
+
+/* SECTION COMMON */
+.section-eyebrow {
+  font-size: 0.68rem; font-weight: 500; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--red); margin-bottom: 1rem;
+}
+.section-h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  font-weight: 700; line-height: 1.0; letter-spacing: -0.02em;
+  margin-bottom: 1.2rem;
+}
+.section-p { font-size: 1rem; color: var(--gray4); line-height: 1.7; font-weight: 300; }
+
+/* CINEMATIC */
+.cinematic {
+  min-height: 60vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 8rem 2rem;
+}
+
+/* BENTO */
+.bento-wrap { max-width: 1160px; margin: 0 auto; padding: 0 1.2rem 7rem; }
+.bento { display: grid; grid-template-columns: repeat(12,1fr); gap: 12px; }
+
+.card {
+  background: var(--gray1);
+  border-radius: 18px; padding: 2.4rem;
+  border: 0.5px solid rgba(255,255,255,0.06);
+  position: relative; overflow: hidden;
+  transition: transform 0.4s cubic-bezier(.23,1,.32,1), border-color 0.3s;
+}
+.card:hover { transform: scale(1.015); border-color: rgba(255,45,45,0.28); }
+.card::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,45,45,0.09) 0%, transparent 55%);
+  opacity:0; transition: opacity 0.4s;
+}
+.card:hover::before { opacity:1; }
+
+.c7 { grid-column: span 7; min-height: 300px; }
+.c5 { grid-column: span 5; min-height: 300px; }
+.c4 { grid-column: span 4; min-height: 240px; }
+
+.card-tag {
+  display: inline-block;
+  background: rgba(255,45,45,0.12); border: 0.5px solid rgba(255,45,45,0.25);
+  color: var(--red2); font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 0.28rem 0.75rem; border-radius: 980px; margin-bottom: 1.3rem;
+}
+.card-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.5rem; font-weight: 600; line-height: 1.15; margin-bottom: 0.7rem;
+}
+.card-desc { color: var(--gray3); font-size: 0.85rem; line-height: 1.6; font-weight: 300; }
+
+/* chart */
+.chart { display:flex; align-items:flex-end; gap:5px; height:75px; margin-top:2rem; }
+.bar {
+  flex:1; border-radius: 3px 3px 0 0;
+  background: linear-gradient(to top, var(--red), rgba(255,45,45,0.15));
+}
+
+/* speedometer */
+.speedo {
+  width:130px; height:65px;
+  border: 3px solid rgba(255,45,45,0.28);
+  border-bottom: none; border-radius: 130px 130px 0 0;
+  margin: 1.8rem auto 0; position: relative;
+}
+.speedo::after {
+  content:''; position:absolute; bottom:0; left:50%;
+  width:3px; height:55px; background:var(--red);
+  transform-origin:bottom center;
+  transform:translateX(-50%) rotate(-40deg);
+  border-radius:3px;
+  animation: needle 3.5s ease-in-out infinite alternate;
+}
+@keyframes needle { from{transform:translateX(-50%) rotate(-75deg)} to{transform:translateX(-50%) rotate(75deg)} }
+
+.big-num {
+  font-family:'Rajdhani',sans-serif; font-size:3.8rem; font-weight:700;
+  color:var(--red); line-height:1; margin-top:1.5rem;
+}
+.big-lbl { color:var(--gray3); font-size:0.75rem; margin-top:0.3rem; }
+
+/* PARALLAX TEXT */
+.par-wrap { overflow:hidden; padding: 4.5rem 0; border-top: 0.5px solid rgba(255,255,255,0.06); }
+.par-text {
+  font-family:'Rajdhani',sans-serif;
+  font-size: clamp(5rem, 14vw, 13rem); font-weight:700;
+  letter-spacing:-0.02em; white-space:nowrap;
+  color:transparent; -webkit-text-stroke:1px rgba(255,255,255,0.07);
+  will-change:transform; line-height:1; display:block;
+}
+
+/* STATS ROW */
+.stats-row {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-top: 0.5px solid rgba(255,255,255,0.08);
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+}
+.stat-cell {
+  padding: 3.5rem 1.5rem; text-align:center;
+  border-right: 0.5px solid rgba(255,255,255,0.08);
+  position:relative; overflow:hidden;
+}
+.stat-cell:last-child { border-right:none; }
+.stat-cell::after {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(circle at 50% 100%, rgba(255,45,45,0.09) 0%, transparent 70%);
+  opacity:0; transition:opacity 0.4s;
+}
+.stat-cell:hover::after { opacity:1; }
+.stat-n {
+  font-family:'Rajdhani',sans-serif; font-size:3.4rem; font-weight:700; line-height:1;
+  margin-bottom:0.5rem;
+}
+.stat-n em { color:var(--red); font-style:normal; }
+.stat-t { font-size:0.78rem; color:var(--gray3); letter-spacing:0.07em; font-weight:300; }
+
+/* DOWNLOAD */
+#download {
+  padding: 9rem 2rem 7rem;
+  background: linear-gradient(180deg, #000 0%, #060000 50%, #000 100%);
+  text-align:center; position:relative; overflow:hidden;
+}
+#download::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(255,45,45,0.11) 0%, transparent 70%);
+}
+
+.dl-cards {
+  display:flex; gap:1.2rem; justify-content:center; flex-wrap:wrap;
+  max-width:780px; margin: 4rem auto 2.5rem; position:relative; z-index:1;
+}
+.dl-card {
+  flex:1; min-width:290px; max-width:350px;
+  background: rgba(29,29,31,0.85);
+  border: 0.5px solid rgba(255,255,255,0.1);
+  border-radius: 22px; padding: 2.8rem 2rem;
+  backdrop-filter: blur(20px);
+  transition: transform 0.4s cubic-bezier(.23,1,.32,1), border-color 0.3s;
+}
+.dl-card:hover { transform: translateY(-7px); border-color: rgba(255,45,45,0.35); }
+.dl-card-red { border-color: rgba(255,45,45,0.25); background: rgba(255,45,45,0.04); }
+
+.dl-badge {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  background: rgba(255,45,45,0.1); border: 0.5px solid rgba(255,45,45,0.22);
+  color:var(--red2); font-size:0.62rem; font-weight:600;
+  letter-spacing:0.2em; text-transform:uppercase;
+  padding:0.28rem 0.75rem; border-radius:980px; margin-bottom:1.4rem;
+}
+.dl-badge::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--red); animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+
+.dl-icon { font-size:2.8rem; display:block; margin-bottom:1rem; }
+.dl-name {
+  font-family:'Rajdhani',sans-serif; font-size:1.25rem; font-weight:600;
+  letter-spacing:0.03em; margin-bottom:0.65rem;
+}
+.dl-desc { color:var(--gray3); font-size:0.82rem; line-height:1.6; margin-bottom:1.8rem; font-weight:300; }
+.dl-btn {
+  display:block; width:100%; padding:0.8rem;
+  border-radius:10px; font-size:0.83rem; font-weight:500;
+  text-decoration:none; text-align:center;
+  transition:all 0.25s;
+}
+.dl-btn-ghost {
+  background:rgba(255,255,255,0.06); color:#fff;
+  border: 0.5px solid rgba(255,255,255,0.12);
+}
+.dl-btn-ghost:hover { background:rgba(255,255,255,0.12); }
+.dl-btn-red { background:var(--red); color:#fff; }
+.dl-btn-red:hover { background:#d01818; }
+
+.dl-arrow { display:flex; align-items:center; color:var(--gray3); font-size:1.5rem; padding:0 0.5rem; }
+.dl-note { color:var(--gray3); font-size:0.73rem; letter-spacing:0.05em; position:relative; z-index:1; }
+
+/* FOOTER */
+footer {
+  border-top: 0.5px solid rgba(255,255,255,0.08);
+  padding: 2.5rem 3rem;
+  background:#000;
+}
+.footer-inner {
+  display:flex; justify-content:space-between; align-items:center;
+  padding-bottom:1.5rem;
+  border-bottom: 0.5px solid rgba(255,255,255,0.06);
+  margin-bottom:1.2rem;
+}
+.footer-logo {
+  font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:0.95rem; letter-spacing:0.12em; text-transform:uppercase;
+}
+.footer-logo span { color:var(--red); }
+footer nav a { color:var(--gray3); text-decoration:none; font-size:0.75rem; margin-left:1.8rem; transition:color 0.2s; }
+footer nav a:hover { color:#fff; }
+.footer-copy { display:flex; justify-content:space-between; color:var(--gray3); font-size:0.73rem; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+
+@media(max-width:768px){
+  nav ul{display:none}
+  .c7,.c5,.c4{grid-column:span 12}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .stat-cell:nth-child(2){border-right:none}
+  .dl-arrow{transform:rotate(90deg)}
+  footer{padding:2rem 1.5rem}
+  .footer-inner{flex-direction:column;gap:1.2rem}
+}
+</style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="logo">APEX<span>DYNAMICS</span></div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<nav id="navbar">
+  <div class="nav-logo">APEX<span>DYNAMICS</span></div>
   <ul>
     <li><a href="#features">Recursos</a></li>
-    <li><a href="#preview">Dashboard</a></li>
+    <li><a href="#stats">Performance</a></li>
     <li><a href="#download">Download</a></li>
     <li><a href="#download" class="nav-cta">Baixar Agora</a></li>
   </ul>
@@ -593,184 +411,220 @@
 
 <!-- HERO -->
 <section id="hero">
+  <div class="hero-bg"></div>
   <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
-  <div class="hero-content">
-    <div class="hero-badge">Racing Data Intelligence</div>
-    <h1>Dados que <em>Vencem Corridas</em></h1>
-    <p class="hero-sub">
-      ApexDynamics centraliza todas as telemetrias do seu carro de corrida em um único lugar — com gráficos avançados, análise de performance em tempo real e insights que fazem a diferença nos milissegundos.
-    </p>
-    <div class="hero-actions">
-      <a href="#download" class="btn-primary">⬇ Baixar Software</a>
-      <a href="#features" class="btn-secondary">Ver Recursos →</a>
+  <div class="hero-orb"></div>
+  <div class="hero-eyebrow">Racing Data Intelligence</div>
+  <h1>Vença com<br><span class="grad">Dados.</span></h1>
+  <p class="hero-sub">A plataforma definitiva para análise de telemetria. Todos os dados do seu carro de corrida, centralizados e visualizados com precisão absoluta.</p>
+  <div class="hero-btns">
+    <a href="#download" class="btn btn-red">⬇ Baixar Software</a>
+    <a href="#features" class="btn btn-outline">Explorar Recursos</a>
+  </div>
+  <div class="scroll-hint">Rolar</div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-inner">
+    <span>Telemetria em Tempo Real <em>✦</em></span>
+    <span>Análise de Performance <em>✦</em></span>
+    <span>Gráficos Avançados <em>✦</em></span>
+    <span>Dados Centralizados <em>✦</em></span>
+    <span>Comparativo de Voltas <em>✦</em></span>
+    <span>Motor · Pneus · Aero <em>✦</em></span>
+    <span>Telemetria em Tempo Real <em>✦</em></span>
+    <span>Análise de Performance <em>✦</em></span>
+    <span>Gráficos Avançados <em>✦</em></span>
+    <span>Dados Centralizados <em>✦</em></span>
+    <span>Comparativo de Voltas <em>✦</em></span>
+    <span>Motor · Pneus · Aero <em>✦</em></span>
+  </div>
+</div>
+
+<!-- CINEMATIC -->
+<section class="cinematic" id="features">
+  <div class="section-eyebrow reveal">// O Software</div>
+  <h2 class="section-h2 reveal d1">Cada milissegundo<br>tem uma história.</h2>
+  <p class="section-p reveal d2" style="max-width:500px">ApexDynamics captura, processa e visualiza cada dado do seu carro com precisão cirúrgica — para engenheiros e pilotos que levam performance a sério.</p>
+</section>
+
+<!-- BENTO -->
+<div class="bento-wrap">
+  <div class="bento">
+    <div class="card c7 reveal">
+      <div class="card-tag">Visualização</div>
+      <div class="card-title">Gráficos em Tempo Real</div>
+      <div class="card-desc">Velocidade, aceleração, frenagem e trajetória com precisão de milissegundos. Interface limpa, dados poderosos.</div>
+      <div class="chart">
+        <div class="bar" style="height:40%"></div><div class="bar" style="height:65%"></div>
+        <div class="bar" style="height:50%"></div><div class="bar" style="height:88%"></div>
+        <div class="bar" style="height:70%"></div><div class="bar" style="height:95%"></div>
+        <div class="bar" style="height:58%"></div><div class="bar" style="height:80%"></div>
+        <div class="bar" style="height:44%"></div><div class="bar" style="height:72%"></div>
+        <div class="bar" style="height:86%"></div><div class="bar" style="height:55%"></div>
+      </div>
+    </div>
+    <div class="card c5 reveal d1">
+      <div class="card-tag">Velocidade</div>
+      <div class="card-title">Precisão Absoluta</div>
+      <div class="card-desc">Telemetria com resolução de 0.01s para análise cirúrgica de cada ponto da pista.</div>
+      <div class="speedo"></div>
+    </div>
+    <div class="card c4 reveal">
+      <div class="card-tag">Análise</div>
+      <div class="card-title">Compare Voltas</div>
+      <div class="card-desc">Sobreponha dados de diferentes sessões e encontre exatamente onde o tempo é perdido.</div>
+      <div class="big-num">Δ 0.3s</div>
+      <div class="big-lbl">ganho médio por volta</div>
+    </div>
+    <div class="card c4 reveal d1">
+      <div class="card-tag">Sistema</div>
+      <div class="card-title">Tudo Centralizado</div>
+      <div class="card-desc">Motor, pneus, suspensão e aerodinâmica em um único painel integrado.</div>
+      <div class="big-num">100+</div>
+      <div class="big-lbl">métricas monitoradas</div>
+    </div>
+    <div class="card c4 reveal d2">
+      <div class="card-tag">Segurança</div>
+      <div class="card-title">Acesso Verificado</div>
+      <div class="card-desc">ApexIdentity garante que só a sua equipe acessa os dados estratégicos da corrida.</div>
+      <div class="big-num">🔐</div>
+      <div class="big-lbl">autenticação protegida</div>
     </div>
   </div>
-</section>
+</div>
+
+<!-- PARALLAX TEXT -->
+<div class="par-wrap">
+  <span class="par-text" id="parText">APEX DYNAMICS · RACING DATA INTELLIGENCE ·&nbsp;&nbsp;</span>
+</div>
 
 <!-- STATS -->
-<div class="stats-bar">
-  <div class="stat">
-    <div class="stat-value">100+</div>
-    <div class="stat-label">Métricas Analisadas</div>
+<div class="stats-row" id="stats">
+  <div class="stat-cell reveal">
+    <div class="stat-n"><span id="c1">0</span>+</div>
+    <div class="stat-t">Métricas Analisadas</div>
   </div>
-  <div class="stat">
-    <div class="stat-value">0.01s</div>
-    <div class="stat-label">Precisão de Telemetria</div>
+  <div class="stat-cell reveal d1">
+    <div class="stat-n">0.<em>01</em>s</div>
+    <div class="stat-t">Resolução de Telemetria</div>
   </div>
-  <div class="stat">
-    <div class="stat-value">360°</div>
-    <div class="stat-label">Visão do Carro</div>
+  <div class="stat-cell reveal d2">
+    <div class="stat-n"><span id="c2">0</span>°</div>
+    <div class="stat-t">Visão do Veículo</div>
   </div>
-  <div class="stat">
-    <div class="stat-value">24/7</div>
-    <div class="stat-label">Monitoramento</div>
+  <div class="stat-cell reveal d3">
+    <div class="stat-n"><em>24</em>/7</div>
+    <div class="stat-t">Monitoramento Contínuo</div>
   </div>
 </div>
 
-<!-- FEATURES -->
-<section id="features">
-  <div class="features-header">
-    <div class="section-tag">// Recursos</div>
-    <h2 class="section-title">Tudo que você precisa<br>para dominar a pista</h2>
-    <p class="section-sub">Uma plataforma completa para engenheiros e pilotos que levam performance a sério.</p>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">📊</div>
-      <div class="feature-title">Gráficos em Tempo Real</div>
-      <p class="feature-desc">Visualize velocidade, aceleração, frenagem e trajetória com gráficos interativos de alta precisão, atualizados em milissegundos.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🏎️</div>
-      <div class="feature-title">Telemetria Centralizada</div>
-      <p class="feature-desc">Todos os dados do carro em um único dashboard. Motor, pneus, suspensão, aerodinâmica — nada escapa da análise.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">⚡</div>
-      <div class="feature-title">Análise de Performance</div>
-      <p class="feature-desc">Compare voltas, identifique pontos de melhoria e descubra onde os milissegundos estão sendo perdidos na pista.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔒</div>
-      <div class="feature-title">Acesso Seguro</div>
-      <p class="feature-desc">Sistema de autenticação via ApexIdentityManager garante que só a sua equipe acessa os dados estratégicos da corrida.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📡</div>
-      <div class="feature-title">Exportação de Dados</div>
-      <p class="feature-desc">Exporte relatórios detalhados em múltiplos formatos para análise aprofundada após cada sessão de pista.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎯</div>
-      <div class="feature-title">Comparativo de Voltas</div>
-      <p class="feature-desc">Sobreponha dados de diferentes voltas e pilotos para identificar com precisão onde o tempo pode ser ganho.</p>
-    </div>
-  </div>
+<!-- CINEMATIC 2 -->
+<section class="cinematic">
+  <div class="section-eyebrow reveal">// Download</div>
+  <h2 class="section-h2 reveal d1">Pronto para<br>ir mais rápido?</h2>
+  <p class="section-p reveal d2" style="max-width:460px">Dois passos. Alguns minutos. E você terá o poder de análise que equipes profissionais usam.</p>
 </section>
-
-<!-- PREVIEW -->
-<div id="preview" style="background: var(--bg);">
-  <div class="content">
-    <div class="section-tag">// Dashboard</div>
-    <h2 class="section-title">Interface projetada para velocidade</h2>
-    <p class="section-sub" style="margin-bottom: 2rem;">
-      Um dashboard limpo e objetivo. Nada de informação desnecessária — só o que importa para tomar decisões rápidas na beira da pista.
-    </p>
-    <a href="#download" class="btn-primary">Experimentar Agora</a>
-  </div>
-
-  <div class="dashboard-mock">
-    <div class="mock-topbar">
-      <div class="mock-dot" style="background:#E8001D"></div>
-      <div class="mock-dot" style="background:#333"></div>
-      <div class="mock-dot" style="background:#333"></div>
-      <span style="margin-left:1rem; font-size:0.65rem; color:var(--muted); font-family:'Orbitron',monospace; letter-spacing:0.1em;">APEXDYNAMICS — SESSÃO 04</span>
-    </div>
-    <div class="mock-body">
-      <div class="mock-title">// Velocidade por Setor</div>
-      <div class="mock-chart">
-        <div class="mock-bar" style="height:45%; animation-delay:0.0s"></div>
-        <div class="mock-bar" style="height:72%; animation-delay:0.05s"></div>
-        <div class="mock-bar" style="height:58%; animation-delay:0.1s"></div>
-        <div class="mock-bar" style="height:90%; animation-delay:0.15s"></div>
-        <div class="mock-bar" style="height:67%; animation-delay:0.2s"></div>
-        <div class="mock-bar" style="height:83%; animation-delay:0.25s"></div>
-        <div class="mock-bar" style="height:55%; animation-delay:0.3s"></div>
-        <div class="mock-bar" style="height:95%; animation-delay:0.35s"></div>
-        <div class="mock-bar" style="height:70%; animation-delay:0.4s"></div>
-        <div class="mock-bar" style="height:62%; animation-delay:0.45s"></div>
-        <div class="mock-bar" style="height:88%; animation-delay:0.5s"></div>
-        <div class="mock-bar" style="height:74%; animation-delay:0.55s"></div>
-      </div>
-      <div class="mock-metrics">
-        <div class="mock-metric">
-          <div class="mock-metric-val">287</div>
-          <div class="mock-metric-lbl">km/h Máx</div>
-        </div>
-        <div class="mock-metric">
-          <div class="mock-metric-val">1:23.4</div>
-          <div class="mock-metric-lbl">Volta Rápida</div>
-        </div>
-        <div class="mock-metric">
-          <div class="mock-metric-val">98°C</div>
-          <div class="mock-metric-lbl">Motor</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- DOWNLOAD -->
 <section id="download">
-  <div class="download-inner">
-    <div class="section-tag">// Download</div>
-    <h2 class="section-title">Comece a analisar agora</h2>
-    <p class="section-sub" style="margin: 0 auto 0.5rem;">
-      Siga os dois passos abaixo para ter o ApexDynamics rodando na sua máquina.
-    </p>
-
-    <div class="download-steps">
-
-      <!-- STEP 1 -->
-      <div class="dl-card">
-        <div class="dl-step">PASSO 01</div>
-        <div class="dl-icon">🔐</div>
-        <div class="dl-name">ApexIdentityManager</div>
-        <p class="dl-desc">
-          Verificação de identidade e licença. Instale e execute primeiro para liberar o acesso ao software principal.
-        </p>
-        <a href="#" class="dl-btn">⬇ Baixar Verificador</a>
-      </div>
-
-      <!-- ARROW -->
-      <div class="dl-arrow">→</div>
-
-      <!-- STEP 2 -->
-      <div class="dl-card">
-        <div class="dl-step">PASSO 02</div>
-        <div class="dl-icon">🏎️</div>
-        <div class="dl-name">ApexDynamics</div>
-        <p class="dl-desc">
-          O software completo de análise de dados de corrida. Após verificar sua identidade, instale e comece a analisar.
-        </p>
-        <a href="#" class="dl-btn primary-dl">⬇ Baixar Software</a>
-      </div>
-
+  <div class="dl-cards reveal">
+    <div class="dl-card">
+      <div class="dl-badge">Passo 01</div>
+      <span class="dl-icon">🔐</span>
+      <div class="dl-name">ApexIdentityManager</div>
+      <p class="dl-desc">Verificador de identidade e licença. Instale primeiro para liberar o acesso ao software principal.</p>
+      <a href="#" class="dl-btn dl-btn-ghost">⬇ Baixar Verificador</a>
     </div>
-
-    <p style="color: var(--muted); font-size: 0.78rem;">
-      Windows 10+ · macOS 12+ · Requer verificação de licença ativa
-    </p>
+    <div class="dl-arrow reveal d1">→</div>
+    <div class="dl-card dl-card-red reveal d2">
+      <div class="dl-badge">Passo 02</div>
+      <span class="dl-icon">🏎️</span>
+      <div class="dl-name">ApexDynamics</div>
+      <p class="dl-desc">O software completo de análise de telemetria. Após verificar sua identidade, comece a dominar cada curva.</p>
+      <a href="#" class="dl-btn dl-btn-red">⬇ Baixar ApexDynamics</a>
+    </div>
   </div>
+  <p class="dl-note reveal">Windows 10+ · macOS 12+ · Requer licença ativa</p>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">APEX<span>DYNAMICS</span></div>
-  <p>© 2026 ApexDynamics. Todos os direitos reservados.</p>
-  <p style="color: var(--muted); font-size: 0.75rem;">Racing Data Intelligence</p>
+  <div class="footer-inner">
+    <div class="footer-logo">APEX<span>DYNAMICS</span></div>
+    <nav>
+      <a href="#features">Recursos</a>
+      <a href="#download">Download</a>
+      <a href="mailto:contato@apexdynamics.store">Contato</a>
+    </nav>
+  </div>
+  <div class="footer-copy">
+    <span>© 2026 ApexDynamics. Todos os direitos reservados.</span>
+    <span>Racing Data Intelligence</span>
+  </div>
 </footer>
 
+<script>
+// Cursor
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; });
+(function anim(){
+  cur.style.left=mx+'px'; cur.style.top=my+'px';
+  rx+=(mx-rx)*0.1; ry+=(my-ry)*0.1;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(anim);
+})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ cur.style.transform='translate(-50%,-50%) scale(2.5)'; cur.style.background='var(--red)'; ring.style.opacity='0'; });
+  el.addEventListener('mouseleave',()=>{ cur.style.transform='translate(-50%,-50%) scale(1)'; cur.style.background='#fff'; ring.style.opacity='1'; });
+});
+
+// Card glow
+document.querySelectorAll('.card').forEach(c=>{
+  c.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect();
+    c.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+    c.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+  });
+});
+
+// Scroll reveal
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// Parallax text
+const pt = document.getElementById('parText');
+window.addEventListener('scroll',()=>{
+  pt.style.transform = `translateX(${-window.scrollY*0.28}px)`;
+});
+
+// Count-up
+function countUp(id,target,ms){
+  const el=document.getElementById(id);
+  const step=target/(ms/16);
+  let v=0;
+  const t=setInterval(()=>{
+    v+=step; if(v>=target){el.textContent=target;clearInterval(t);return;}
+    el.textContent=Math.floor(v);
+  },16);
+}
+const statsObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ countUp('c1',100,1400); countUp('c2',360,1400); statsObs.disconnect(); }
+  });
+},{threshold:0.4});
+statsObs.observe(document.querySelector('.stats-row'));
+
+// Nav on scroll
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').style.background =
+    window.scrollY>50 ? 'rgba(0,0,0,0.94)' : 'rgba(0,0,0,0.75)';
+});
+</script>
 </body>
 </html>
