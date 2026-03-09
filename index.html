@@ -1,630 +1,1416 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ApexDynamics — Racing Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,200;0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-:root {
-  --black: #000000;
-  --white: #f5f5f7;
-  --red: #ff2d2d;
-  --red2: #ff6b6b;
-  --gray1: #1d1d1f;
-  --gray2: #2d2d2f;
-  --gray3: #6e6e73;
-  --gray4: #aeaeb2;
-}
-html { scroll-behavior: smooth; }
-body {
-  background: var(--black);
-  color: var(--white);
-  font-family: 'DM Sans', sans-serif;
-  overflow-x: hidden;
-  cursor: none;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ApexDynamics — Software profissional de análise de telemetria para equipes de corrida automobilística.">
+  <title>ApexDynamics — Race Telemetry Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-/* CURSOR */
-#cursor {
-  width: 10px; height: 10px;
-  background: #fff;
-  border-radius: 50%;
-  position: fixed; pointer-events: none; z-index: 99999;
-  transform: translate(-50%,-50%);
-  transition: transform 0.15s, background 0.2s;
-}
-#cursor-ring {
-  width: 34px; height: 34px;
-  border: 1px solid rgba(255,255,255,0.35);
-  border-radius: 50%;
-  position: fixed; pointer-events: none; z-index: 99998;
-  transform: translate(-50%,-50%);
-  transition: all 0.22s cubic-bezier(.23,1,.32,1);
-}
+  <style>
+  /* ══════════════════════════════════════════════════════
+     CSS CUSTOM PROPERTIES
+  ══════════════════════════════════════════════════════ */
+  @property --rot { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 
-/* NAV */
-nav {
-  position: fixed; top:0; left:0; right:0; z-index:1000;
-  height: 52px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 2.5rem;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(255,255,255,0.08);
-  transition: background 0.3s;
-}
-.nav-logo {
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700; font-size: 1.1rem;
-  letter-spacing: 0.12em; text-transform: uppercase;
-}
-.nav-logo span { color: var(--red); }
-nav ul { display: flex; gap: 2rem; list-style: none; }
-nav ul a {
-  color: rgba(245,245,247,0.7); text-decoration: none;
-  font-size: 0.78rem; font-weight: 400; letter-spacing: 0.02em;
-  transition: color 0.2s;
-}
-nav ul a:hover { color: #fff; }
-.nav-cta {
-  background: var(--red); color: #fff !important;
-  padding: 0.35rem 1.1rem; border-radius: 980px;
-  font-weight: 500 !important; transition: background 0.2s !important;
-}
-.nav-cta:hover { background: #d01818 !important; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* HERO */
-#hero {
-  min-height: 100vh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 0 2rem;
-  position: relative; overflow: hidden;
-}
-.hero-bg {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 100% 70% at 50% 60%, rgba(255,45,45,0.16) 0%, transparent 65%);
-}
-.hero-grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(255,45,45,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,45,45,0.05) 1px, transparent 1px);
-  background-size: 70px 70px;
-  animation: gridDrift 25s linear infinite;
-}
-@keyframes gridDrift { to { transform: translateY(70px); } }
+  :root {
+    --bg:     #07070b;
+    --bg2:    #0c0c16;
+    --bg3:    #101020;
+    --red:    #e63946;
+    --red2:   #ff4d5a;
+    --blue:   #4a9eff;
+    --blue2:  #74b8ff;
+    --silver: #8a9bb5;
+    --white:  #f0f0f8;
+    --text:   #7070a0;
+    --dim:    #35354a;
+    --border: rgba(255,255,255,0.055);
+    --font:   'Inter', system-ui, sans-serif;
+    --mono:   'JetBrains Mono', monospace;
+  }
 
-.hero-orb {
-  position: absolute; width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(255,45,45,0.13) 0%, transparent 65%);
-  border-radius: 50%; top:50%; left:50%;
-  transform: translate(-50%,-50%);
-  animation: pulse 7s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7} 50%{transform:translate(-50%,-50%) scale(1.2);opacity:1} }
+  html { scroll-behavior: smooth; font-size: 16px; }
 
-.hero-eyebrow {
-  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.3em;
-  text-transform: uppercase; color: var(--red);
-  margin-bottom: 1.5rem;
-  opacity: 0; animation: fadeUp 1s 0.3s ease both;
-}
-h1 {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: clamp(4rem, 11vw, 10rem);
-  font-weight: 700; line-height: 0.92; letter-spacing: -0.02em;
-  margin-bottom: 1.8rem;
-  opacity: 0; animation: fadeUp 1s 0.5s ease both;
-}
-h1 .grad {
-  display: block;
-  background: linear-gradient(135deg, #fff 0%, #ff9999 45%, var(--red) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.hero-sub {
-  font-size: clamp(1rem, 2vw, 1.2rem); font-weight: 300; color: var(--gray4);
-  max-width: 520px; line-height: 1.65; margin-bottom: 3rem;
-  opacity: 0; animation: fadeUp 1s 0.7s ease both;
-}
-.hero-btns {
-  display: flex; gap: 0.85rem; flex-wrap: wrap; justify-content: center;
-  opacity: 0; animation: fadeUp 1s 0.9s ease both;
-}
-.btn {
-  display: inline-flex; align-items: center; gap: 0.45rem;
-  padding: 0.8rem 1.8rem; border-radius: 980px;
-  font-size: 0.88rem; font-weight: 500; text-decoration: none;
-  transition: all 0.3s cubic-bezier(.23,1,.32,1);
-}
-.btn-red { background: var(--red); color: #fff; }
-.btn-red:hover { background: #d01818; transform: scale(1.04); }
-.btn-outline {
-  background: rgba(255,255,255,0.07); color: #fff;
-  border: 0.5px solid rgba(255,255,255,0.15);
-}
-.btn-outline:hover { background: rgba(255,255,255,0.13); transform: scale(1.04); }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--white);
+    overflow-x: hidden;
+    cursor: none;
+  }
 
-.scroll-hint {
-  position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-  color: var(--gray3); font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase;
-  opacity: 0; animation: fadeUp 1s 1.3s ease both, nudge 2.5s 2.5s ease-in-out infinite;
-}
-.scroll-hint::after { content:''; width:1px; height:36px; background: linear-gradient(to bottom, var(--gray3), transparent); }
-@keyframes nudge { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(7px)} }
+  ::selection { background: rgba(230,57,70,.3); color: #fff; }
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--red); }
 
-/* MARQUEE */
-.marquee-wrap {
-  overflow: hidden; padding: 1.2rem 0;
-  border-top: 0.5px solid rgba(255,255,255,0.07);
-  border-bottom: 0.5px solid rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.015);
-}
-.marquee-inner {
-  display: flex; gap: 3.5rem; width: max-content;
-  animation: slide 22s linear infinite;
-}
-.marquee-inner span {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 0.72rem; font-weight: 500;
-  letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray3);
-  white-space: nowrap;
-}
-.marquee-inner em { color: var(--red); font-style: normal; }
-@keyframes slide { to { transform: translateX(-50%); } }
+  /* ══════════════════════════════════════════════════════
+     CURSOR
+  ══════════════════════════════════════════════════════ */
+  #c-dot {
+    position: fixed; z-index: 9999; pointer-events: none;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    transform: translate(-50%,-50%);
+    transition: width .15s, height .15s, background .15s;
+    mix-blend-mode: difference;
+  }
+  #c-ring {
+    position: fixed; z-index: 9998; pointer-events: none;
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1.5px solid rgba(230,57,70,.5);
+    transform: translate(-50%,-50%);
+    transition: border-color .2s;
+  }
+  #c-ring.big {
+    border-color: var(--red);
+    box-shadow: 0 0 16px rgba(230,57,70,.25);
+  }
 
-/* SCROLL REVEAL */
-.reveal { opacity:0; transform:translateY(45px); transition: opacity 0.9s cubic-bezier(.23,1,.32,1), transform 0.9s cubic-bezier(.23,1,.32,1); }
-.reveal.in { opacity:1; transform:translateY(0); }
-.d1{transition-delay:.1s} .d2{transition-delay:.2s} .d3{transition-delay:.3s} .d4{transition-delay:.4s}
+  /* ══════════════════════════════════════════════════════
+     BACKGROUND LAYERS
+  ══════════════════════════════════════════════════════ */
+  #bg-canvas {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+  /* Scanlines overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 999; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,.028) 0px, rgba(0,0,0,.028) 1px,
+      transparent 1px, transparent 3px
+    );
+  }
+  /* Subtle grid */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(74,158,255,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,158,255,.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
 
-/* SECTION COMMON */
-.section-eyebrow {
-  font-size: 0.68rem; font-weight: 500; letter-spacing: 0.3em;
-  text-transform: uppercase; color: var(--red); margin-bottom: 1rem;
-}
-.section-h2 {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: clamp(2.5rem, 6vw, 5.5rem);
-  font-weight: 700; line-height: 1.0; letter-spacing: -0.02em;
-  margin-bottom: 1.2rem;
-}
-.section-p { font-size: 1rem; color: var(--gray4); line-height: 1.7; font-weight: 300; }
+  /* ══════════════════════════════════════════════════════
+     NAVIGATION
+  ══════════════════════════════════════════════════════ */
+  #nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+    height: 72px; padding: 0 5%;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background .5s, backdrop-filter .5s, border-bottom .5s;
+  }
+  #nav.on {
+    background: rgba(7,7,11,.9);
+    backdrop-filter: blur(28px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; mix-blend-mode: screen; }
+  .nav-logo img { height: 36px; object-fit: contain; }
+  .nav-links { display: flex; align-items: center; gap: 34px; list-style: none; }
+  .nav-links a {
+    text-decoration: none; color: var(--text); font-size: 13.5px; font-weight: 500;
+    letter-spacing: .3px; transition: color .25s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta {
+    padding: 10px 26px; background: var(--red);
+    color: #fff !important; border-radius: 8px;
+    font-weight: 700 !important; font-size: 14px !important;
+    transition: box-shadow .3s, transform .2s !important;
+    position: relative; overflow: hidden;
+  }
+  .nav-cta::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+    opacity: 0; transition: opacity .25s;
+  }
+  .nav-cta:hover::before { opacity: 1; }
+  .nav-cta:hover { box-shadow: 0 6px 30px rgba(230,57,70,.5); transform: translateY(-1px); }
 
-/* CINEMATIC */
-.cinematic {
-  min-height: 60vh; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center; padding: 8rem 2rem;
-}
+  /* ══════════════════════════════════════════════════════
+     HERO
+  ══════════════════════════════════════════════════════ */
+  #hero {
+    position: relative; z-index: 1;
+    min-height: 100vh; padding: 120px 5% 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center; gap: 60px;
+  }
+  /* Dramatic radial glow behind hero */
+  #hero::before {
+    content: '';
+    position: absolute; top: -100px; left: -150px;
+    width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(230,57,70,.1) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  #hero::after {
+    content: '';
+    position: absolute; top: 0; right: -100px;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,158,255,.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
 
-/* BENTO */
-.bento-wrap { max-width: 1160px; margin: 0 auto; padding: 0 1.2rem 7rem; }
-.bento { display: grid; grid-template-columns: repeat(12,1fr); gap: 12px; }
+  /* Left column */
+  .hero-left { position: relative; z-index: 2; }
+  /* Wrapper blends as a group; img is a normal child */
+  .hero-logo-wrap {
+    width: 260px; margin-bottom: 36px;
+    animation: fadeUp .9s .1s both;
+    position: relative;
+    mix-blend-mode: screen; /* whole group blends: black→transparent */
+  }
+  .hero-logo {
+    width: 100%; display: block;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 6px 16px; margin-bottom: 22px;
+    border: 1px solid rgba(230,57,70,.35);
+    border-radius: 100px; background: rgba(230,57,70,.1);
+    font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+    color: var(--red); letter-spacing: 2.5px; text-transform: uppercase;
+    animation: fadeUp .9s .2s both;
+  }
+  .hero-tag span {
+    width: 6px; height: 6px; background: var(--red);
+    border-radius: 50%; animation: blink 1.6s infinite;
+  }
+  .hero-h1 {
+    font-size: clamp(38px, 4.5vw, 62px);
+    font-weight: 900; line-height: 1.06;
+    letter-spacing: -2px; margin-bottom: 22px;
+    animation: fadeUp .9s .3s both;
+  }
+  .hero-h1 .r { color: var(--red); }
+  .hero-h1 .b { color: var(--blue); }
+  .hero-h1 .g {
+    background: linear-gradient(90deg, var(--red), var(--blue));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-p {
+    font-size: 16px; line-height: 1.75; color: var(--text);
+    max-width: 480px; margin-bottom: 40px;
+    animation: fadeUp .9s .4s both;
+  }
+  .hero-actions {
+    display: flex; align-items: center; gap: 14px;
+    flex-wrap: wrap; animation: fadeUp .9s .5s both;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 32px; background: var(--red); color: #fff;
+    border-radius: 9px; font-size: 15px; font-weight: 700;
+    text-decoration: none; position: relative; overflow: hidden;
+    transition: box-shadow .3s, transform .2s;
+  }
+  .btn-primary::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+    opacity: 0; transition: opacity .2s;
+  }
+  .btn-primary:hover::before { opacity: 1; }
+  .btn-primary:hover { box-shadow: 0 10px 40px rgba(230,57,70,.5); transform: translateY(-2px); }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 32px; border: 1px solid var(--border); color: var(--text);
+    border-radius: 9px; font-size: 15px; font-weight: 600;
+    text-decoration: none; transition: all .3s;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(74,158,255,.4); color: var(--blue2);
+    background: rgba(74,158,255,.06); transform: translateY(-2px);
+  }
+  .hero-badges {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 32px; animation: fadeUp .9s .6s both;
+  }
+  .h-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text);
+    font-family: var(--mono);
+  }
+  .h-badge-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .h-badge-dot.red  { background: var(--red);  box-shadow: 0 0 8px var(--red); }
+  .h-badge-dot.blue { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+  .h-badge-dot.grn  { background: #27c93f;     box-shadow: 0 0 8px #27c93f; }
 
-.card {
-  background: var(--gray1);
-  border-radius: 18px; padding: 2.4rem;
-  border: 0.5px solid rgba(255,255,255,0.06);
-  position: relative; overflow: hidden;
-  transition: transform 0.4s cubic-bezier(.23,1,.32,1), border-color 0.3s;
-}
-.card:hover { transform: scale(1.015); border-color: rgba(255,45,45,0.28); }
-.card::before {
-  content:''; position:absolute; inset:0;
-  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,45,45,0.09) 0%, transparent 55%);
-  opacity:0; transition: opacity 0.4s;
-}
-.card:hover::before { opacity:1; }
+  /* Right column — Telemetry Panel */
+  .hero-right {
+    position: relative; z-index: 2;
+    animation: fadeLeft .9s .3s both;
+  }
+  .hero-right::before {
+    content: ''; position: absolute; inset: -2px;
+    border-radius: 20px; z-index: -1;
+    background: conic-gradient(from var(--rot),
+      transparent 10%, rgba(230,57,70,.7) 30%, rgba(74,158,255,.7) 55%, transparent 75%);
+    animation: spin 5s linear infinite;
+    filter: blur(2px);
+  }
+  .tpanel {
+    background: rgba(10,10,18,.97);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 18px; overflow: hidden;
+    backdrop-filter: blur(20px);
+  }
+  .tbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 18px; border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.02);
+  }
+  .tdots { display: flex; gap: 6px; }
+  .tdots span { width: 11px; height: 11px; border-radius: 50%; }
+  .tdots span:nth-child(1) { background: #ff5f56; }
+  .tdots span:nth-child(2) { background: #ffbd2e; }
+  .tdots span:nth-child(3) { background: #27c93f; }
+  .ttitle { font-family: var(--mono); font-size: 11.5px; color: var(--dim); letter-spacing: .5px; }
+  .tlive {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: #27c93f; letter-spacing: 1.5px;
+  }
+  .tlive::before {
+    content: ''; width: 6px; height: 6px;
+    background: #27c93f; border-radius: 50%;
+    animation: blink 1.3s infinite;
+  }
+  .tlegend {
+    display: flex; gap: 18px; padding: 9px 18px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.01);
+    flex-wrap: wrap;
+  }
+  .tleg-item {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--text);
+  }
+  .tleg-line { width: 20px; height: 2.5px; border-radius: 2px; }
+  #tc { width: 100%; height: 190px; display: block; }
+  .tmetrics {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+  }
+  .tm {
+    padding: 14px 10px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .tm:last-child { border-right: none; }
+  .tm-val {
+    font-family: var(--mono); font-size: 24px;
+    font-weight: 700; line-height: 1;
+  }
+  .tm-lbl { font-size: 9.5px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 5px; }
 
-.c7 { grid-column: span 7; min-height: 300px; }
-.c5 { grid-column: span 5; min-height: 300px; }
-.c4 { grid-column: span 4; min-height: 240px; }
+  /* ══════════════════════════════════════════════════════
+     TICKER / DATA STRIP
+  ══════════════════════════════════════════════════════ */
+  .ticker-wrap {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    overflow: hidden; padding: 12px 0;
+  }
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: ''; position: absolute; top: 0; bottom: 0;
+    width: 120px; z-index: 2; pointer-events: none;
+  }
+  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg2), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(270deg, var(--bg2), transparent); }
+  .ticker-track {
+    display: flex; gap: 0; white-space: nowrap;
+    animation: ticker 28s linear infinite;
+    width: max-content;
+  }
+  .ticker-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0 32px; font-family: var(--mono); font-size: 11.5px;
+    color: var(--text); border-right: 1px solid var(--border);
+  }
+  .ticker-item .tk-label { color: var(--dim); }
+  .ticker-item .tk-val   { color: var(--white); font-weight: 600; }
+  .ticker-item .tk-val.red   { color: var(--red); }
+  .ticker-item .tk-val.blue  { color: var(--blue); }
+  .ticker-item .tk-val.green { color: #27c93f; }
 
-.card-tag {
-  display: inline-block;
-  background: rgba(255,45,45,0.12); border: 0.5px solid rgba(255,45,45,0.25);
-  color: var(--red2); font-size: 0.62rem; font-weight: 600;
-  letter-spacing: 0.2em; text-transform: uppercase;
-  padding: 0.28rem 0.75rem; border-radius: 980px; margin-bottom: 1.3rem;
-}
-.card-title {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1.5rem; font-weight: 600; line-height: 1.15; margin-bottom: 0.7rem;
-}
-.card-desc { color: var(--gray3); font-size: 0.85rem; line-height: 1.6; font-weight: 300; }
+  /* ══════════════════════════════════════════════════════
+     STATS
+  ══════════════════════════════════════════════════════ */
+  #stats {
+    position: relative; z-index: 1;
+    padding: 100px 5%;
+  }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0; background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .stat-cell {
+    padding: 42px 28px; text-align: center;
+    background: var(--bg2); position: relative;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell-inner { position: relative; z-index: 1; }
+  .stat-cell::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--red), var(--blue));
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .9s cubic-bezier(.4,0,.2,1);
+  }
+  .stat-cell.lit::before { transform: scaleX(1); }
+  .stat-cell::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(230,57,70,.08), transparent 65%);
+    opacity: 0; transition: opacity .6s;
+  }
+  .stat-cell.lit::after { opacity: 1; }
+  .stat-n {
+    font-family: var(--mono); font-size: 58px; font-weight: 900;
+    letter-spacing: -3px; line-height: 1;
+    background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,.55));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-suf { color: var(--red); }
+  .stat-l {
+    font-size: 12px; color: var(--text); font-weight: 500;
+    margin-top: 8px; letter-spacing: .3px;
+  }
 
-/* chart */
-.chart { display:flex; align-items:flex-end; gap:5px; height:75px; margin-top:2rem; }
-.bar {
-  flex:1; border-radius: 3px 3px 0 0;
-  background: linear-gradient(to top, var(--red), rgba(255,45,45,0.15));
-}
+  /* ══════════════════════════════════════════════════════
+     SECTION HEADER (shared)
+  ══════════════════════════════════════════════════════ */
+  .s-label {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    color: var(--red); letter-spacing: 3.5px; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .s-title {
+    font-size: clamp(34px, 5vw, 58px); font-weight: 900;
+    letter-spacing: -2px; line-height: 1.08; margin-bottom: 18px;
+  }
+  .s-sub {
+    font-size: 17px; color: var(--text); line-height: 1.75; max-width: 520px;
+  }
+  .s-hdr { margin-bottom: 60px; }
 
-/* speedometer */
-.speedo {
-  width:130px; height:65px;
-  border: 3px solid rgba(255,45,45,0.28);
-  border-bottom: none; border-radius: 130px 130px 0 0;
-  margin: 1.8rem auto 0; position: relative;
-}
-.speedo::after {
-  content:''; position:absolute; bottom:0; left:50%;
-  width:3px; height:55px; background:var(--red);
-  transform-origin:bottom center;
-  transform:translateX(-50%) rotate(-40deg);
-  border-radius:3px;
-  animation: needle 3.5s ease-in-out infinite alternate;
-}
-@keyframes needle { from{transform:translateX(-50%) rotate(-75deg)} to{transform:translateX(-50%) rotate(75deg)} }
+  /* Reveal base */
+  .rev {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+  }
+  .rev.in { opacity: 1; transform: translateY(0); }
+  .rev-left {
+    opacity: 0; transform: translateX(-30px);
+    transition: opacity .7s, transform .7s;
+  }
+  .rev-left.in { opacity: 1; transform: translateX(0); }
+  .rev-right {
+    opacity: 0; transform: translateX(30px);
+    transition: opacity .7s, transform .7s;
+  }
+  .rev-right.in { opacity: 1; transform: translateX(0); }
 
-.big-num {
-  font-family:'Rajdhani',sans-serif; font-size:3.8rem; font-weight:700;
-  color:var(--red); line-height:1; margin-top:1.5rem;
-}
-.big-lbl { color:var(--gray3); font-size:0.75rem; margin-top:0.3rem; }
+  /* ══════════════════════════════════════════════════════
+     FEATURES
+  ══════════════════════════════════════════════════════ */
+  #features { position: relative; z-index: 1; padding: 100px 5%; }
+  #features .bg-accent {
+    position: absolute; top: 50%; right: -100px;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,158,255,.06), transparent 65%);
+    pointer-events: none; transform: translateY(-50%);
+  }
+  .feat-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
+  .feat {
+    padding: 28px 24px; background: var(--bg2);
+    position: relative; overflow: hidden;
+    transition: background .3s;
+  }
+  .feat::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(230,57,70,.07), transparent 60%);
+    opacity: 0; transition: opacity .3s;
+  }
+  .feat:hover { background: rgba(10,10,22,1); }
+  .feat:hover::before { opacity: 1; }
+  .feat-num {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--red); letter-spacing: 1px; margin-bottom: 14px;
+    opacity: .7;
+  }
+  .feat-icon {
+    width: 42px; height: 42px; margin-bottom: 16px;
+    background: rgba(230,57,70,.1); border: 1px solid rgba(230,57,70,.25);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    transition: box-shadow .3s, border-color .3s;
+  }
+  .feat:hover .feat-icon {
+    box-shadow: 0 0 20px rgba(230,57,70,.3);
+    border-color: rgba(230,57,70,.5);
+  }
+  .feat-icon svg {
+    width: 19px; height: 19px; stroke: var(--red);
+    fill: none; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .feat-name { font-size: 14.5px; font-weight: 700; margin-bottom: 7px; }
+  .feat-desc { font-size: 12.5px; color: var(--text); line-height: 1.6; }
+  .feat:nth-child(1)  { transition-delay: .03s; }
+  .feat:nth-child(2)  { transition-delay: .06s; }
+  .feat:nth-child(3)  { transition-delay: .09s; }
+  .feat:nth-child(4)  { transition-delay: .12s; }
+  .feat:nth-child(5)  { transition-delay: .15s; }
+  .feat:nth-child(6)  { transition-delay: .18s; }
+  .feat:nth-child(7)  { transition-delay: .21s; }
+  .feat:nth-child(8)  { transition-delay: .24s; }
+  .feat:nth-child(9)  { transition-delay: .27s; }
+  .feat:nth-child(10) { transition-delay: .30s; }
+  .feat:nth-child(11) { transition-delay: .33s; }
+  .feat:nth-child(12) { transition-delay: .36s; }
 
-/* PARALLAX TEXT */
-.par-wrap { overflow:hidden; padding: 4.5rem 0; border-top: 0.5px solid rgba(255,255,255,0.06); }
-.par-text {
-  font-family:'Rajdhani',sans-serif;
-  font-size: clamp(5rem, 14vw, 13rem); font-weight:700;
-  letter-spacing:-0.02em; white-space:nowrap;
-  color:transparent; -webkit-text-stroke:1px rgba(255,255,255,0.07);
-  will-change:transform; line-height:1; display:block;
-}
+  /* ══════════════════════════════════════════════════════
+     CALLOUT STRIP
+  ══════════════════════════════════════════════════════ */
+  .callout {
+    position: relative; z-index: 1;
+    margin: 0 5%; border-radius: 18px; overflow: hidden;
+    background: linear-gradient(135deg, rgba(230,57,70,.15), rgba(74,158,255,.1));
+    border: 1px solid rgba(230,57,70,.25);
+    padding: 60px 5%;
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 40px;
+  }
+  .callout::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 0% 50%, rgba(230,57,70,.12), transparent 60%),
+                radial-gradient(ellipse at 100% 50%, rgba(74,158,255,.1), transparent 60%);
+    pointer-events: none;
+  }
+  .callout-text h2 { font-size: clamp(24px, 3vw, 36px); font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; }
+  .callout-text p  { font-size: 15px; color: var(--text); }
+  .callout-text h2 span { color: var(--red); }
 
-/* STATS ROW */
-.stats-row {
-  display:grid; grid-template-columns:repeat(4,1fr);
-  border-top: 0.5px solid rgba(255,255,255,0.08);
-  border-bottom: 0.5px solid rgba(255,255,255,0.08);
-}
-.stat-cell {
-  padding: 3.5rem 1.5rem; text-align:center;
-  border-right: 0.5px solid rgba(255,255,255,0.08);
-  position:relative; overflow:hidden;
-}
-.stat-cell:last-child { border-right:none; }
-.stat-cell::after {
-  content:''; position:absolute; inset:0;
-  background: radial-gradient(circle at 50% 100%, rgba(255,45,45,0.09) 0%, transparent 70%);
-  opacity:0; transition:opacity 0.4s;
-}
-.stat-cell:hover::after { opacity:1; }
-.stat-n {
-  font-family:'Rajdhani',sans-serif; font-size:3.4rem; font-weight:700; line-height:1;
-  margin-bottom:0.5rem;
-}
-.stat-n em { color:var(--red); font-style:normal; }
-.stat-t { font-size:0.78rem; color:var(--gray3); letter-spacing:0.07em; font-weight:300; }
+  /* ══════════════════════════════════════════════════════
+     ECOSYSTEM
+  ══════════════════════════════════════════════════════ */
+  #ecosystem { position: relative; z-index: 1; padding: 100px 5%; background: var(--bg2); }
+  .eco-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 900px; }
+  .eco-card {
+    position: relative; padding: 0;
+    border-radius: 18px; overflow: hidden;
+    transform-style: preserve-3d;
+  }
+  /* Rotating gradient border via ::before wrapper */
+  .eco-border {
+    position: absolute; inset: -1px; border-radius: 18px;
+    background: conic-gradient(from var(--rot),
+      transparent 30%, rgba(230,57,70,.6) 50%, rgba(74,158,255,.6) 70%, transparent 90%);
+    animation: spin 6s linear infinite;
+    z-index: 0;
+  }
+  .eco-card.featured .eco-border {
+    background: conic-gradient(from var(--rot),
+      transparent 10%, rgba(230,57,70,.9) 35%, rgba(255,77,90,.9) 50%, transparent 70%);
+    animation: spin 3.5s linear infinite;
+  }
+  .eco-inner {
+    position: relative; z-index: 1;
+    margin: 1px; border-radius: 17px;
+    background: var(--bg3); padding: 36px 30px;
+    height: 100%;
+  }
+  .eco-card.featured .eco-inner { background: #0e0812; }
+  .eco-tag {
+    display: inline-block; padding: 4px 12px;
+    border: 1px solid rgba(230,57,70,.35); border-radius: 100px;
+    font-size: 10px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--red); margin-bottom: 22px;
+  }
+  .eco-card.featured .eco-tag { background: var(--red); color: #fff; border-color: var(--red); }
+  .eco-name { font-size: 20px; font-weight: 800; margin-bottom: 12px; }
+  .eco-desc { font-size: 13.5px; color: var(--text); line-height: 1.75; margin-bottom: 26px; }
+  .eco-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .eco-list li { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text); }
+  .eco-list li::before {
+    content: ''; width: 5px; height: 5px;
+    background: var(--red); border-radius: 50%;
+    flex-shrink: 0; box-shadow: 0 0 6px var(--red);
+  }
 
-/* DOWNLOAD */
-#download {
-  padding: 9rem 2rem 7rem;
-  background: linear-gradient(180deg, #000 0%, #060000 50%, #000 100%);
-  text-align:center; position:relative; overflow:hidden;
-}
-#download::before {
-  content:''; position:absolute; inset:0;
-  background: radial-gradient(ellipse 70% 55% at 50% 50%, rgba(255,45,45,0.11) 0%, transparent 70%);
-}
+  /* ══════════════════════════════════════════════════════
+     FORMATS
+  ══════════════════════════════════════════════════════ */
+  #formats { position: relative; z-index: 1; padding: 100px 5%; }
+  #formats .bg-accent2 {
+    position: absolute; top: 50%; left: -80px;
+    width: 350px; height: 350px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(230,57,70,.07), transparent 65%);
+    pointer-events: none; transform: translateY(-50%);
+  }
+  .fmt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .fmt {
+    display: flex; align-items: flex-start; gap: 20px;
+    padding: 28px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 14px;
+    position: relative; overflow: hidden;
+    transition: border-color .35s, transform .35s, box-shadow .35s;
+  }
+  .fmt::before {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--red), var(--blue));
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .5s;
+  }
+  .fmt:hover::before { transform: scaleX(1); }
+  .fmt:hover {
+    border-color: rgba(230,57,70,.3);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 50px rgba(0,0,0,.35), 0 0 0 1px rgba(230,57,70,.1);
+  }
+  .fmt-badge {
+    flex-shrink: 0; width: 52px; height: 52px;
+    background: rgba(230,57,70,.1);
+    border: 1px solid rgba(230,57,70,.3); border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--red);
+    transition: box-shadow .3s;
+  }
+  .fmt:hover .fmt-badge { box-shadow: 0 0 18px rgba(230,57,70,.35); }
+  .fmt-body h3 { font-size: 15.5px; font-weight: 700; margin-bottom: 7px; }
+  .fmt-body p { font-size: 13px; color: var(--text); line-height: 1.65; }
+  .fmt-tags { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
+  .fmt-tag {
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    padding: 3px 9px;
+    background: rgba(74,158,255,.07); border: 1px solid rgba(74,158,255,.2);
+    border-radius: 4px; color: var(--blue);
+  }
 
-.dl-cards {
-  display:flex; gap:1.2rem; justify-content:center; flex-wrap:wrap;
-  max-width:780px; margin: 4rem auto 2.5rem; position:relative; z-index:1;
-}
-.dl-card {
-  flex:1; min-width:290px; max-width:350px;
-  background: rgba(29,29,31,0.85);
-  border: 0.5px solid rgba(255,255,255,0.1);
-  border-radius: 22px; padding: 2.8rem 2rem;
-  backdrop-filter: blur(20px);
-  transition: transform 0.4s cubic-bezier(.23,1,.32,1), border-color 0.3s;
-}
-.dl-card:hover { transform: translateY(-7px); border-color: rgba(255,45,45,0.35); }
-.dl-card-red { border-color: rgba(255,45,45,0.25); background: rgba(255,45,45,0.04); }
+  /* ══════════════════════════════════════════════════════
+     DOWNLOAD
+  ══════════════════════════════════════════════════════ */
+  #download { position: relative; z-index: 1; padding: 100px 5%; text-align: center; }
+  #download::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, rgba(230,57,70,.07), transparent 65%);
+  }
+  .dl-intro { margin-bottom: 52px; }
+  .dl-intro h2 {
+    font-size: clamp(34px, 4.5vw, 56px); font-weight: 900;
+    letter-spacing: -2px; margin-bottom: 16px;
+  }
+  .dl-intro p { font-size: 17px; color: var(--text); line-height: 1.72; max-width: 540px; margin: 0 auto; }
 
-.dl-badge {
-  display:inline-flex; align-items:center; gap:0.4rem;
-  background: rgba(255,45,45,0.1); border: 0.5px solid rgba(255,45,45,0.22);
-  color:var(--red2); font-size:0.62rem; font-weight:600;
-  letter-spacing:0.2em; text-transform:uppercase;
-  padding:0.28rem 0.75rem; border-radius:980px; margin-bottom:1.4rem;
-}
-.dl-badge::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--red); animation:blink 1.5s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+  .dl-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 24px; max-width: 860px; margin: 0 auto;
+  }
+  .dl-card {
+    position: relative; border-radius: 22px; overflow: hidden;
+    text-align: left;
+  }
+  .dl-card-border {
+    position: absolute; inset: -1px; border-radius: 22px;
+    background: conic-gradient(from var(--rot),
+      transparent 25%, rgba(230,57,70,.65) 45%, rgba(74,158,255,.55) 65%, transparent 85%);
+    animation: spin 5s linear infinite;
+    z-index: 0;
+  }
+  .dl-card.secondary .dl-card-border {
+    background: conic-gradient(from var(--rot),
+      transparent 25%, rgba(74,158,255,.65) 50%, rgba(230,57,70,.4) 70%, transparent 85%);
+    animation-duration: 7s;
+  }
+  .dl-card-inner {
+    position: relative; z-index: 1; margin: 1px; border-radius: 21px;
+    background: var(--bg2); padding: 36px 32px;
+  }
+  .dl-card-logo-wrap {
+    display: inline-block; margin-bottom: 22px;
+    mix-blend-mode: screen;
+  }
+  .dl-card-logo {
+    height: 60px; object-fit: contain; display: block;
+  }
+  .dl-card-name {
+    font-size: 20px; font-weight: 800; letter-spacing: -.5px;
+    margin-bottom: 8px;
+  }
+  .dl-card-desc {
+    font-size: 13.5px; color: var(--text); line-height: 1.65;
+    margin-bottom: 26px;
+  }
+  .dl-card-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 28px; background: var(--red); color: #fff;
+    border-radius: 9px; font-size: 14px; font-weight: 700;
+    text-decoration: none; width: 100%; justify-content: center;
+    transition: box-shadow .3s, transform .2s; position: relative; overflow: hidden;
+  }
+  .dl-card-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+    opacity: 0; transition: opacity .2s;
+  }
+  .dl-card-btn:hover::before { opacity: 1; }
+  .dl-card-btn:hover { box-shadow: 0 8px 32px rgba(230,57,70,.45); transform: translateY(-2px); }
+  .dl-card.secondary .dl-card-btn {
+    background: transparent; border: 1px solid rgba(74,158,255,.4); color: var(--blue2);
+  }
+  .dl-card.secondary .dl-card-btn:hover {
+    background: rgba(74,158,255,.12); box-shadow: 0 8px 32px rgba(74,158,255,.25); border-color: var(--blue);
+  }
+  .dl-card-req {
+    margin-top: 14px; font-family: var(--mono);
+    font-size: 10.5px; color: var(--dim); text-align: center;
+  }
+  .dl-card-req span { color: var(--text-dim); }
 
-.dl-icon { font-size:2.8rem; display:block; margin-bottom:1rem; }
-.dl-name {
-  font-family:'Rajdhani',sans-serif; font-size:1.25rem; font-weight:600;
-  letter-spacing:0.03em; margin-bottom:0.65rem;
-}
-.dl-desc { color:var(--gray3); font-size:0.82rem; line-height:1.6; margin-bottom:1.8rem; font-weight:300; }
-.dl-btn {
-  display:block; width:100%; padding:0.8rem;
-  border-radius:10px; font-size:0.83rem; font-weight:500;
-  text-decoration:none; text-align:center;
-  transition:all 0.25s;
-}
-.dl-btn-ghost {
-  background:rgba(255,255,255,0.06); color:#fff;
-  border: 0.5px solid rgba(255,255,255,0.12);
-}
-.dl-btn-ghost:hover { background:rgba(255,255,255,0.12); }
-.dl-btn-red { background:var(--red); color:#fff; }
-.dl-btn-red:hover { background:#d01818; }
+  /* legacy unused */
+  .dl-box { display: none; }
+  .dl-logo { display: none; }
 
-.dl-arrow { display:flex; align-items:center; color:var(--gray3); font-size:1.5rem; padding:0 0.5rem; }
-.dl-note { color:var(--gray3); font-size:0.73rem; letter-spacing:0.05em; position:relative; z-index:1; }
+  /* ── Guia de instalação (passos) ───────────────────────── */
+  .dl-steps {
+    display: flex; max-width: 860px; margin: 0 auto 56px;
+    position: relative; gap: 0;
+  }
+  .dl-steps::before {
+    content: ''; position: absolute; top: 27px;
+    left: calc(100% / 6); right: calc(100% / 6);
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(230,57,70,.5) 0%, rgba(74,158,255,.5) 50%, rgba(230,57,70,.5) 100%);
+  }
+  .dl-step {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 14px; padding: 0 18px;
+  }
+  .dl-step-num {
+    width: 54px; height: 54px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 17px; font-weight: 800;
+    background: var(--bg2); position: relative; z-index: 1;
+    border: 1.5px solid rgba(230,57,70,.45); color: var(--red);
+    box-shadow: 0 0 18px rgba(230,57,70,.15);
+  }
+  .dl-step:nth-child(2) .dl-step-num {
+    border-color: rgba(74,158,255,.45); color: var(--blue2);
+    box-shadow: 0 0 18px rgba(74,158,255,.15);
+  }
+  .dl-step-title {
+    font-size: 13.5px; font-weight: 800; text-align: center;
+    letter-spacing: .2px;
+  }
+  .dl-step-text {
+    font-size: 12px; color: var(--text); text-align: center;
+    line-height: 1.65; max-width: 180px;
+  }
+  .dl-step-tag {
+    display: inline-block; font-family: var(--mono); font-size: 10px;
+    padding: 2px 8px; border-radius: 4px; font-weight: 700;
+    background: rgba(230,57,70,.12); color: var(--red);
+    border: 1px solid rgba(230,57,70,.25); margin-top: -4px;
+  }
+  .dl-step:nth-child(2) .dl-step-tag {
+    background: rgba(74,158,255,.1); color: var(--blue2);
+    border-color: rgba(74,158,255,.25);
+  }
 
-/* FOOTER */
-footer {
-  border-top: 0.5px solid rgba(255,255,255,0.08);
-  padding: 2.5rem 3rem;
-  background:#000;
-}
-.footer-inner {
-  display:flex; justify-content:space-between; align-items:center;
-  padding-bottom:1.5rem;
-  border-bottom: 0.5px solid rgba(255,255,255,0.06);
-  margin-bottom:1.2rem;
-}
-.footer-logo {
-  font-family:'Rajdhani',sans-serif; font-weight:700;
-  font-size:0.95rem; letter-spacing:0.12em; text-transform:uppercase;
-}
-.footer-logo span { color:var(--red); }
-footer nav a { color:var(--gray3); text-decoration:none; font-size:0.75rem; margin-left:1.8rem; transition:color 0.2s; }
-footer nav a:hover { color:#fff; }
-.footer-copy { display:flex; justify-content:space-between; color:var(--gray3); font-size:0.73rem; }
+  /* ══════════════════════════════════════════════════════
+     FOOTER
+  ══════════════════════════════════════════════════════ */
+  footer {
+    position: relative; z-index: 1;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 50px 5%;
+  }
+  .footer-in {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 28px;
+  }
+  .footer-brand { display: flex; flex-direction: column; gap: 10px; }
+  .footer-blend { display: inline-block; mix-blend-mode: screen; }
+  .footer-brand img { height: 38px; object-fit: contain; display: block; }
+  .footer-tagline { font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+  .footer-links { display: flex; gap: 28px; }
+  .footer-links a {
+    font-size: 13px; color: var(--text); text-decoration: none; transition: color .25s;
+  }
+  .footer-links a:hover { color: var(--white); }
+  .footer-copy { font-size: 12px; color: var(--dim); }
 
-@keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+  /* ══════════════════════════════════════════════════════
+     KEYFRAMES
+  ══════════════════════════════════════════════════════ */
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeLeft { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes blink    { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  @keyframes spin     { to { --rot: 360deg; } }
+  @keyframes ticker   { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+  @keyframes float    { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+  @keyframes shimmer-line {
+    0%,100%{opacity:.5;width:30%;} 50%{opacity:1;width:75%;}
+  }
+  @keyframes pulse-red {
+    0%,100%{box-shadow: 0 0 0 0 rgba(230,57,70,.5);}
+    50%{box-shadow: 0 0 0 10px rgba(230,57,70,0);}
+  }
 
-@media(max-width:768px){
-  nav ul{display:none}
-  .c7,.c5,.c4{grid-column:span 12}
-  .stats-row{grid-template-columns:repeat(2,1fr)}
-  .stat-cell:nth-child(2){border-right:none}
-  .dl-arrow{transform:rotate(90deg)}
-  footer{padding:2rem 1.5rem}
-  .footer-inner{flex-direction:column;gap:1.2rem}
-}
-</style>
+  /* ══════════════════════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════════════════════ */
+  @media (max-width: 1024px) {
+    #hero { grid-template-columns: 1fr; text-align: center; }
+    .hero-logo { margin-left: auto; margin-right: auto; }
+    .hero-p { margin-left: auto; margin-right: auto; }
+    .hero-actions { justify-content: center; }
+    .hero-badges { justify-content: center; }
+    .hero-left  { order: 1; }
+    .hero-right { order: 2; }
+    .eco-grid { grid-template-columns: 1fr; }
+    .feat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .fmt-grid { grid-template-columns: 1fr; }
+    .callout { grid-template-columns: 1fr; }
+    .nav-links li:not(:last-child) { display: none; }
+    .dl-grid { grid-template-columns: 1fr; max-width: 480px; }
+    .tmetrics { grid-template-columns: repeat(2, 1fr); }
+    .footer-in { flex-direction: column; text-align: center; }
+    .footer-links { justify-content: center; flex-wrap: wrap; }
+  }
+  </style>
 </head>
 <body>
 
-<div id="cursor"></div>
-<div id="cursor-ring"></div>
+<!-- CURSOR -->
+<div id="c-dot"></div>
+<div id="c-ring"></div>
 
-<nav id="navbar">
-  <div class="nav-logo">APEX<span>DYNAMICS</span></div>
-  <ul>
-    <li><a href="#features">Recursos</a></li>
-    <li><a href="#stats">Performance</a></li>
-    <li><a href="#download">Download</a></li>
-    <li><a href="#download" class="nav-cta">Baixar Agora</a></li>
+<!-- BACKGROUND -->
+<canvas id="bg-canvas"></canvas>
+<div class="bg-grid"></div>
+
+<!-- ════════════════════════════════════════
+     NAV
+════════════════════════════════════════ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <img src="apex-logo.png" alt="ApexDynamics">
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Funcionalidades</a></li>
+    <li><a href="#ecosystem">Ecossistema</a></li>
+    <li><a href="#formats">Formatos</a></li>
+    <li><a href="#download" class="nav-cta">Download</a></li>
   </ul>
 </nav>
 
-<!-- HERO -->
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
 <section id="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
-  <div class="hero-orb"></div>
-  <div class="hero-eyebrow">Racing Data Intelligence</div>
-  <h1>Vença com<br><span class="grad">Dados.</span></h1>
-  <p class="hero-sub">A plataforma definitiva para análise de telemetria. Todos os dados do seu carro de corrida, centralizados e visualizados com precisão absoluta.</p>
-  <div class="hero-btns">
-    <a href="#download" class="btn btn-red">⬇ Baixar Software</a>
-    <a href="#features" class="btn btn-outline">Explorar Recursos</a>
-  </div>
-  <div class="scroll-hint">Rolar</div>
-</section>
+  <!-- Left -->
+  <div class="hero-left">
+    <div class="hero-logo-wrap">
+      <img src="apex-logo.png" class="hero-logo" alt="ApexDynamics">
+    </div>
 
-<!-- MARQUEE -->
-<div class="marquee-wrap">
-  <div class="marquee-inner">
-    <span>Telemetria em Tempo Real <em>✦</em></span>
-    <span>Análise de Performance <em>✦</em></span>
-    <span>Gráficos Avançados <em>✦</em></span>
-    <span>Dados Centralizados <em>✦</em></span>
-    <span>Comparativo de Voltas <em>✦</em></span>
-    <span>Motor · Pneus · Aero <em>✦</em></span>
-    <span>Telemetria em Tempo Real <em>✦</em></span>
-    <span>Análise de Performance <em>✦</em></span>
-    <span>Gráficos Avançados <em>✦</em></span>
-    <span>Dados Centralizados <em>✦</em></span>
-    <span>Comparativo de Voltas <em>✦</em></span>
-    <span>Motor · Pneus · Aero <em>✦</em></span>
-  </div>
-</div>
+    <div class="hero-tag">
+      <span></span>
+      Race Telemetry Intelligence
+    </div>
 
-<!-- CINEMATIC -->
-<section class="cinematic" id="features">
-  <div class="section-eyebrow reveal">// O Software</div>
-  <h2 class="section-h2 reveal d1">Cada milissegundo<br>tem uma história.</h2>
-  <p class="section-p reveal d2" style="max-width:500px">ApexDynamics captura, processa e visualiza cada dado do seu carro com precisão cirúrgica — para engenheiros e pilotos que levam performance a sério.</p>
-</section>
+    <h1 class="hero-h1">
+      Dados que<br>
+      <span class="g">vencem corridas.</span>
+    </h1>
 
-<!-- BENTO -->
-<div class="bento-wrap">
-  <div class="bento">
-    <div class="card c7 reveal">
-      <div class="card-tag">Visualização</div>
-      <div class="card-title">Gráficos em Tempo Real</div>
-      <div class="card-desc">Velocidade, aceleração, frenagem e trajetória com precisão de milissegundos. Interface limpa, dados poderosos.</div>
-      <div class="chart">
-        <div class="bar" style="height:40%"></div><div class="bar" style="height:65%"></div>
-        <div class="bar" style="height:50%"></div><div class="bar" style="height:88%"></div>
-        <div class="bar" style="height:70%"></div><div class="bar" style="height:95%"></div>
-        <div class="bar" style="height:58%"></div><div class="bar" style="height:80%"></div>
-        <div class="bar" style="height:44%"></div><div class="bar" style="height:72%"></div>
-        <div class="bar" style="height:86%"></div><div class="bar" style="height:55%"></div>
+    <p class="hero-p">
+      Analise telemetria em tempo real, compare voltas com precisão de milissegundos e identifique cada décimo perdido.
+      Software profissional para quem leva a corrida a sério.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#download" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Gratuito
+      </a>
+      <a href="#features" class="btn-ghost">
+        Explorar funcionalidades →
+      </a>
+    </div>
+
+    <div class="hero-badges">
+      <div class="h-badge">
+        <div class="h-badge-dot red"></div>
+        <span>Windows 10+</span>
+      </div>
+      <div class="h-badge">
+        <div class="h-badge-dot grn"></div>
+        <span>100% Offline</span>
+      </div>
+      <div class="h-badge">
+        <div class="h-badge-dot blue"></div>
+        <span>12 Módulos</span>
       </div>
     </div>
-    <div class="card c5 reveal d1">
-      <div class="card-tag">Velocidade</div>
-      <div class="card-title">Precisão Absoluta</div>
-      <div class="card-desc">Telemetria com resolução de 0.01s para análise cirúrgica de cada ponto da pista.</div>
-      <div class="speedo"></div>
-    </div>
-    <div class="card c4 reveal">
-      <div class="card-tag">Análise</div>
-      <div class="card-title">Compare Voltas</div>
-      <div class="card-desc">Sobreponha dados de diferentes sessões e encontre exatamente onde o tempo é perdido.</div>
-      <div class="big-num">Δ 0.3s</div>
-      <div class="big-lbl">ganho médio por volta</div>
-    </div>
-    <div class="card c4 reveal d1">
-      <div class="card-tag">Sistema</div>
-      <div class="card-title">Tudo Centralizado</div>
-      <div class="card-desc">Motor, pneus, suspensão e aerodinâmica em um único painel integrado.</div>
-      <div class="big-num">100+</div>
-      <div class="big-lbl">métricas monitoradas</div>
-    </div>
-    <div class="card c4 reveal d2">
-      <div class="card-tag">Segurança</div>
-      <div class="card-title">Acesso Verificado</div>
-      <div class="card-desc">ApexIdentity garante que só a sua equipe acessa os dados estratégicos da corrida.</div>
-      <div class="big-num">🔐</div>
-      <div class="big-lbl">autenticação protegida</div>
-    </div>
   </div>
-</div>
 
-<!-- PARALLAX TEXT -->
-<div class="par-wrap">
-  <span class="par-text" id="parText">APEX DYNAMICS · RACING DATA INTELLIGENCE ·&nbsp;&nbsp;</span>
-</div>
-
-<!-- STATS -->
-<div class="stats-row" id="stats">
-  <div class="stat-cell reveal">
-    <div class="stat-n"><span id="c1">0</span>+</div>
-    <div class="stat-t">Métricas Analisadas</div>
+  <!-- Right: Telemetry Panel -->
+  <div class="hero-right">
+    <div class="tpanel">
+      <div class="tbar">
+        <div class="tdots"><span></span><span></span><span></span></div>
+        <span class="ttitle">ApexDynamics · Sessão Ativa · Volta 23 · Setor 2</span>
+        <span class="tlive">LIVE</span>
+      </div>
+      <div class="tlegend">
+        <div class="tleg-item"><div class="tleg-line" style="background:#e63946"></div>Velocidade</div>
+        <div class="tleg-item"><div class="tleg-line" style="background:#27c93f"></div>Acelerador</div>
+        <div class="tleg-item"><div class="tleg-line" style="background:#ff9f43"></div>Freio</div>
+        <div class="tleg-item"><div class="tleg-line" style="background:#4a9eff"></div>G-Force</div>
+      </div>
+      <canvas id="tc"></canvas>
+      <div class="tmetrics">
+        <div class="tm"><div class="tm-val" id="m-spd" style="color:#e63946">0</div><div class="tm-lbl">km/h</div></div>
+        <div class="tm"><div class="tm-val" id="m-rpm" style="color:#ff9f43">0</div><div class="tm-lbl">rpm</div></div>
+        <div class="tm"><div class="tm-val" id="m-gear" style="color:#4a9eff">N</div><div class="tm-lbl">Marcha</div></div>
+        <div class="tm"><div class="tm-val" id="m-gf" style="color:#a29bfe">0.0</div><div class="tm-lbl">G-Lateral</div></div>
+      </div>
+    </div>
   </div>
-  <div class="stat-cell reveal d1">
-    <div class="stat-n">0.<em>01</em>s</div>
-    <div class="stat-t">Resolução de Telemetria</div>
-  </div>
-  <div class="stat-cell reveal d2">
-    <div class="stat-n"><span id="c2">0</span>°</div>
-    <div class="stat-t">Visão do Veículo</div>
-  </div>
-  <div class="stat-cell reveal d3">
-    <div class="stat-n"><em>24</em>/7</div>
-    <div class="stat-t">Monitoramento Contínuo</div>
-  </div>
-</div>
-
-<!-- CINEMATIC 2 -->
-<section class="cinematic">
-  <div class="section-eyebrow reveal">// Download</div>
-  <h2 class="section-h2 reveal d1">Pronto para<br>ir mais rápido?</h2>
-  <p class="section-p reveal d2" style="max-width:460px">Dois passos. Alguns minutos. E você terá o poder de análise que equipes profissionais usam.</p>
 </section>
 
-<!-- DOWNLOAD -->
+<!-- ════════════════════════════════════════
+     TICKER
+════════════════════════════════════════ -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker">
+    <!-- JS will clone this -->
+    <div class="ticker-item"><span class="tk-label">SPEED</span><span class="tk-val red" id="tk-spd">287.3 km/h</span></div>
+    <div class="ticker-item"><span class="tk-label">RPM</span><span class="tk-val">8,200</span></div>
+    <div class="ticker-item"><span class="tk-label">THROTTLE</span><span class="tk-val green">100%</span></div>
+    <div class="ticker-item"><span class="tk-label">BRAKE</span><span class="tk-val">0%</span></div>
+    <div class="ticker-item"><span class="tk-label">GEAR</span><span class="tk-val blue">6</span></div>
+    <div class="ticker-item"><span class="tk-label">SECTOR 1</span><span class="tk-val">28.431s</span></div>
+    <div class="ticker-item"><span class="tk-label">DELTA</span><span class="tk-val red">–0.243s</span></div>
+    <div class="ticker-item"><span class="tk-label">G-FORCE</span><span class="tk-val blue">2.8 G</span></div>
+    <div class="ticker-item"><span class="tk-label">LAP</span><span class="tk-val">23 / 40</span></div>
+    <div class="ticker-item"><span class="tk-label">OIL TEMP</span><span class="tk-val">102°C</span></div>
+    <div class="ticker-item"><span class="tk-label">WATER TEMP</span><span class="tk-val green">87°C</span></div>
+    <div class="ticker-item"><span class="tk-label">FUEL</span><span class="tk-val">34.8 L</span></div>
+    <div class="ticker-item"><span class="tk-label">BEST LAP</span><span class="tk-val blue">1:38.204</span></div>
+    <div class="ticker-item"><span class="tk-label">SESSION</span><span class="tk-val">QUALIFYING</span></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     STATS
+════════════════════════════════════════ -->
+<section id="stats">
+  <div class="stats-grid">
+    <div class="stat-cell">
+      <div class="stat-cell-inner">
+        <div class="stat-n" data-to="12">0</div>
+        <div class="stat-l">Abas de análise</div>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-inner">
+        <div class="stat-n" data-to="4">0</div>
+        <div class="stat-l">Formatos suportados</div>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-inner">
+        <div class="stat-n" data-to="100" data-suf="%">0</div>
+        <div class="stat-l">Offline e local</div>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-inner">
+        <div class="stat-n" style="-webkit-text-fill-color:inherit;background:none;color:var(--red)">0ms</div>
+        <div class="stat-l">Dados enviados ao servidor</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     FEATURES
+════════════════════════════════════════ -->
+<section id="features">
+  <div class="bg-accent"></div>
+  <div class="s-hdr">
+    <div class="s-label rev">Funcionalidades</div>
+    <h2 class="s-title rev">12 ferramentas.<br>Um dashboard.</h2>
+    <p class="s-sub rev">Da volta rápida ao relatório completo de pneus e setup — tudo que engenheiro e piloto precisam.</p>
+  </div>
+
+  <div class="feat-grid">
+    <div class="feat rev"><div class="feat-num">01</div><div class="feat-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="feat-name">Visão Geral</div><div class="feat-desc">Dashboard com as métricas mais críticas da sessão numa tela.</div></div>
+    <div class="feat rev"><div class="feat-num">02</div><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><div class="feat-name">Comparação de Voltas</div><div class="feat-desc">Sobreposição de canais, delta por setor e análise de ganhos.</div></div>
+    <div class="feat rev"><div class="feat-num">03</div><div class="feat-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="feat-name">Análise WOT</div><div class="feat-desc">Wide Open Throttle — aceleração plena e curva de potência.</div></div>
+    <div class="feat rev"><div class="feat-num">04</div><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="feat-name">Sinais Vitais</div><div class="feat-desc">Óleo, temperatura, tensão elétrica e lambda em tempo real.</div></div>
+    <div class="feat rev"><div class="feat-num">05</div><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="feat-name">Relatórios</div><div class="feat-desc">Geração de relatórios completos com gráficos e estatísticas.</div></div>
+    <div class="feat rev"><div class="feat-num">06</div><div class="feat-icon"><svg viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div><div class="feat-name">Mapa de Pista</div><div class="feat-desc">Trajetória reconstruída em 2D com sobreposição de canais.</div></div>
+    <div class="feat rev"><div class="feat-num">07</div><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></div><div class="feat-name">Temperaturas</div><div class="feat-desc">Mapa de calor de pneus e freios com janelas ideais.</div></div>
+    <div class="feat rev"><div class="feat-num">08</div><div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="feat-name">Setup Sheet</div><div class="feat-desc">Configurações mecânicas por evento, sessão e condição.</div></div>
+    <div class="feat rev"><div class="feat-num">09</div><div class="feat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="feat-name">Pneus</div><div class="feat-desc">Compostos, desgaste e temperatura por stint e sessão.</div></div>
+    <div class="feat rev"><div class="feat-num">10</div><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="feat-name">Perfis</div><div class="feat-desc">Múltiplos pilotos, histórico e evolução de performance.</div></div>
+    <div class="feat rev"><div class="feat-num">11</div><div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div class="feat-name">Multi-Sessão</div><div class="feat-desc">Análise cruzada de sessões com workspaces dedicados.</div></div>
+    <div class="feat rev"><div class="feat-num">12</div><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="feat-name">Feedback</div><div class="feat-desc">Recomendações automáticas a partir dos dados da sessão.</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     CALLOUT
+════════════════════════════════════════ -->
+<div class="callout rev">
+  <div class="callout-text">
+    <h2>Seus dados ficam <span>com você.</span></h2>
+    <p>100% offline — zero telemetria enviada para servidores externos. Análise profissional sem comprometer a privacidade da equipe.</p>
+  </div>
+  <a href="#download" class="btn-primary">Começar agora →</a>
+</div>
+
+<!-- ════════════════════════════════════════
+     ECOSYSTEM
+════════════════════════════════════════ -->
+<section id="ecosystem">
+  <div class="s-hdr">
+    <div class="s-label rev">Ecossistema</div>
+    <h2 class="s-title rev">Três apps.<br>Um sistema.</h2>
+    <p class="s-sub rev">ApexDynamics é parte de um ecossistema completo — do gerenciamento de identidade ao servidor local administrativo.</p>
+  </div>
+
+  <div class="eco-grid">
+    <div class="eco-card featured rev">
+      <div class="eco-border"></div>
+      <div class="eco-inner">
+        <div class="eco-tag">Principal</div>
+        <div class="eco-name">ApexDynamics</div>
+        <div class="eco-desc">O app principal de análise. 12 módulos para engenheiros e pilotos extraírem performance de cada bit de dado.</div>
+        <ul class="eco-list">
+          <li>12 abas de análise especializadas</li>
+          <li>4 formatos de dados suportados</li>
+          <li>Workspaces e perfis por piloto</li>
+          <li>100% offline — seus dados ficam com você</li>
+        </ul>
+      </div>
+    </div>
+    <div class="eco-card rev">
+      <div class="eco-border"></div>
+      <div class="eco-inner">
+        <div class="eco-tag">Identidade</div>
+        <div class="eco-name">ApexIdentityManager</div>
+        <div class="eco-desc">Gerencia identidade com segurança. Gera o hash APEX exclusivo, criptografado e vinculado ao hardware.</div>
+        <ul class="eco-list">
+          <li>Hash APEX-XXXX-XXXX-XXXX</li>
+          <li>Criptografia AES-256 local</li>
+          <li>Vinculado ao hardware do dispositivo</li>
+          <li>Registro e login seguros</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     FORMATS
+════════════════════════════════════════ -->
+<section id="formats">
+  <div class="bg-accent2"></div>
+  <div class="s-hdr">
+    <div class="s-label rev">Compatibilidade</div>
+    <h2 class="s-title rev">Seus dados,<br>como chegam.</h2>
+    <p class="s-sub rev">Suporte nativo para os principais formatos de aquisição de dados do automobilismo.</p>
+  </div>
+  <div class="fmt-grid">
+    <div class="fmt rev">
+      <div class="fmt-badge">CSV</div>
+      <div class="fmt-body">
+        <h3>CSV Universal</h3>
+        <p>Auto-detecção de separador, encoding e mapeamento de canais. Compatível com os principais sistemas.</p>
+        <div class="fmt-tags"><span class="fmt-tag">ProTune</span><span class="fmt-tag">MoTec CSV</span><span class="fmt-tag">AiM</span></div>
+      </div>
+    </div>
+    <div class="fmt rev">
+      <div class="fmt-badge">TDL</div>
+      <div class="fmt-body">
+        <h3>TDL Binário</h3>
+        <p>Parser binário proprietário de alta performance para o formato TDL com alta densidade de canais.</p>
+        <div class="fmt-tags"><span class="fmt-tag">Binário</span><span class="fmt-tag">Alta densidade</span></div>
+      </div>
+    </div>
+    <div class="fmt rev">
+      <div class="fmt-badge">.LD</div>
+      <div class="fmt-body">
+        <h3>MoTec LD</h3>
+        <p>Parser nativo do binário MoTec LD. Acesso direto a todos os canais, sem software intermediário.</p>
+        <div class="fmt-tags"><span class="fmt-tag">MoTec i2</span><span class="fmt-tag">Binário nativo</span></div>
+      </div>
+    </div>
+    <div class="fmt rev">
+      <div class="fmt-badge">LOG</div>
+      <div class="fmt-body">
+        <h3>Bosch WinDarab</h3>
+        <p>Suporte ao LOG do Bosch WinDarab — amplamente usado em competições de alto nível no Brasil e no mundo.</p>
+        <div class="fmt-tags"><span class="fmt-tag">WinDarab</span><span class="fmt-tag">Bosch MS 6</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     DOWNLOAD
+════════════════════════════════════════ -->
 <section id="download">
-  <div class="dl-cards reveal">
-    <div class="dl-card">
-      <div class="dl-badge">Passo 01</div>
-      <span class="dl-icon">🔐</span>
-      <div class="dl-name">ApexIdentityManager</div>
-      <p class="dl-desc">Verificador de identidade e licença. Instale primeiro para liberar o acesso ao software principal.</p>
-      <a href="#" class="dl-btn dl-btn-ghost">⬇ Baixar Verificador</a>
-    </div>
-    <div class="dl-arrow reveal d1">→</div>
-    <div class="dl-card dl-card-red reveal d2">
-      <div class="dl-badge">Passo 02</div>
-      <span class="dl-icon">🏎️</span>
-      <div class="dl-name">ApexDynamics</div>
-      <p class="dl-desc">O software completo de análise de telemetria. Após verificar sua identidade, comece a dominar cada curva.</p>
-      <a href="#" class="dl-btn dl-btn-red">⬇ Baixar ApexDynamics</a>
-    </div>
+
+  <div class="dl-intro rev">
+    <div class="s-label" style="margin-bottom:14px">Download</div>
+    <h2>Baixe e comece a vencer.</h2>
+    <p>Dois apps, três minutos de instalação. Siga os passos abaixo na ordem correta.</p>
   </div>
-  <p class="dl-note reveal">Windows 10+ · macOS 12+ · Requer licença ativa</p>
+
+  <!-- Guia de instalação -->
+  <div class="dl-steps rev">
+
+    <div class="dl-step">
+      <div class="dl-step-num">01</div>
+      <div class="dl-step-tag">Primeiro</div>
+      <div class="dl-step-title">Baixe o Identity Manager</div>
+      <div class="dl-step-text">Instale e abra o app. Crie sua conta — ele gera um <strong>APEX Hash</strong> exclusivo vinculado ao seu hardware.</div>
+    </div>
+
+    <div class="dl-step">
+      <div class="dl-step-num">02</div>
+      <div class="dl-step-tag">Copie</div>
+      <div class="dl-step-title">Anote seu APEX Hash</div>
+      <div class="dl-step-text">O hash aparece na tela após o registro no formato <code style="color:var(--red);font-family:var(--mono);font-size:11px">APEX-XXXX-XXXX-XXXX</code>. Guarde-o.</div>
+    </div>
+
+    <div class="dl-step">
+      <div class="dl-step-num">03</div>
+      <div class="dl-step-tag">Por último</div>
+      <div class="dl-step-title">Baixe o ApexDynamics</div>
+      <div class="dl-step-text">Instale, insira o APEX Hash na primeira tela e comece a analisar suas sessões.</div>
+    </div>
+
+  </div>
+
+  <div class="dl-grid">
+
+    <!-- ApexIdentityManager — instalar primeiro -->
+    <div class="dl-card secondary rev">
+      <div class="dl-card-border"></div>
+      <div class="dl-card-inner">
+        <div class="dl-card-logo-wrap" style="opacity:.85"><img src="apex-logo.png" class="dl-card-logo" alt="ApexIdentityManager"></div>
+        <div class="dl-card-name">ApexIdentityManager</div>
+        <div class="dl-card-desc">Instale <strong>este primeiro</strong>. Cria sua conta, vincula ao hardware e gera o hash APEX necessário para ativar o ApexDynamics.</div>
+        <a href="https://github.com/liviacasarini/race-telemetry/releases/latest/download/ApexIdentityManager.Setup.1.0.0.exe"
+           class="dl-card-btn" download>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Download Identity Manager
+        </a>
+        <div class="dl-card-req">Windows 10+ &nbsp;·&nbsp; 64-bit &nbsp;·&nbsp; ~80 MB</div>
+      </div>
+    </div>
+
+    <!-- ApexDynamics -->
+    <div class="dl-card rev">
+      <div class="dl-card-border"></div>
+      <div class="dl-card-inner">
+        <div class="dl-card-logo-wrap"><img src="apex-logo.png" class="dl-card-logo" alt="ApexDynamics"></div>
+        <div class="dl-card-name">ApexDynamics</div>
+        <div class="dl-card-desc">O app principal de análise de telemetria. 12 módulos, suporte a 4 formatos e workspaces por piloto — 100% offline.</div>
+        <a href="https://github.com/liviacasarini/race-telemetry/releases/latest/download/ApexDynamics.Setup.1.0.0.exe"
+           class="dl-card-btn" download>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download ApexDynamics
+        </a>
+        <div class="dl-card-req">Windows 10+ &nbsp;·&nbsp; 64-bit &nbsp;·&nbsp; ~95 MB</div>
+      </div>
+    </div>
+
+  </div>
+
 </section>
 
-<!-- FOOTER -->
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
 <footer>
-  <div class="footer-inner">
-    <div class="footer-logo">APEX<span>DYNAMICS</span></div>
-    <nav>
-      <a href="#features">Recursos</a>
+  <div class="footer-in">
+    <div class="footer-brand">
+      <div class="footer-blend"><img src="apex-logo.png" alt="ApexDynamics"></div>
+      <div class="footer-tagline">Race Telemetry Intelligence</div>
+    </div>
+    <div class="footer-links">
+      <a href="#features">Funcionalidades</a>
+      <a href="#ecosystem">Ecossistema</a>
+      <a href="#formats">Formatos</a>
       <a href="#download">Download</a>
-      <a href="mailto:contato@apexdynamics.store">Contato</a>
-    </nav>
-  </div>
-  <div class="footer-copy">
-    <span>© 2026 ApexDynamics. Todos os direitos reservados.</span>
-    <span>Racing Data Intelligence</span>
+    </div>
+    <div class="footer-copy">&copy; 2025 ApexDynamics. Todos os direitos reservados.</div>
   </div>
 </footer>
 
+
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════ -->
 <script>
-// Cursor
-const cur = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
+'use strict';
+
+/* ── CURSOR ─────────────────────────────── */
+const cDot  = document.getElementById('c-dot');
+const cRing = document.getElementById('c-ring');
 let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; });
-(function anim(){
-  cur.style.left=mx+'px'; cur.style.top=my+'px';
-  rx+=(mx-rx)*0.1; ry+=(my-ry)*0.1;
-  ring.style.left=rx+'px'; ring.style.top=ry+'px';
-  requestAnimationFrame(anim);
+
+document.addEventListener('mousemove', e => {
+  mx=e.clientX; my=e.clientY;
+  cDot.style.left=mx+'px'; cDot.style.top=my+'px';
+});
+(function rl(){
+  rx+=(mx-rx)*.1; ry+=(my-ry)*.1;
+  cRing.style.left=rx+'px'; cRing.style.top=ry+'px';
+  requestAnimationFrame(rl);
 })();
-document.querySelectorAll('a,button').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{ cur.style.transform='translate(-50%,-50%) scale(2.5)'; cur.style.background='var(--red)'; ring.style.opacity='0'; });
-  el.addEventListener('mouseleave',()=>{ cur.style.transform='translate(-50%,-50%) scale(1)'; cur.style.background='#fff'; ring.style.opacity='1'; });
+document.querySelectorAll('a,button,.feat,.eco-card,.fmt').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cRing.classList.add('big'));
+  el.addEventListener('mouseleave',()=>cRing.classList.remove('big'));
 });
 
-// Card glow
-document.querySelectorAll('.card').forEach(c=>{
-  c.addEventListener('mousemove',e=>{
-    const r=c.getBoundingClientRect();
-    c.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
-    c.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+/* ── NAV ─────────────────────────────────── */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('on',scrollY>60),{passive:true});
+
+/* ── PARTICLE BACKGROUND ─────────────────── */
+const bgC = document.getElementById('bg-canvas');
+const bgX = bgC.getContext('2d');
+let pts=[];
+const N=65,D=145;
+
+function resizeBg(){bgC.width=innerWidth;bgC.height=innerHeight;}
+resizeBg();
+window.addEventListener('resize',resizeBg,{passive:true});
+
+for(let i=0;i<N;i++) pts.push({
+  x:Math.random()*bgC.width, y:Math.random()*bgC.height,
+  vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
+  r:Math.random()*1.4+.4, a:Math.random()*.4+.12,
+  // some particles are blue-tinted
+  col: Math.random()>.6 ? [74,158,255] : [230,57,70]
+});
+
+(function loop(){
+  bgX.clearRect(0,0,bgC.width,bgC.height);
+  pts.forEach((p,i)=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>bgC.width)  p.vx*=-1;
+    if(p.y<0||p.y>bgC.height) p.vy*=-1;
+    bgX.beginPath();
+    bgX.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgX.fillStyle=`rgba(${p.col[0]},${p.col[1]},${p.col[2]},${p.a})`;
+    bgX.fill();
+    for(let j=i+1;j<pts.length;j++){
+      const q=pts[j], dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<D){
+        const a=(1-d/D)*.09;
+        const r=Math.round((p.col[0]+q.col[0])/2);
+        const g=Math.round((p.col[1]+q.col[1])/2);
+        const b2=Math.round((p.col[2]+q.col[2])/2);
+        bgX.beginPath(); bgX.moveTo(p.x,p.y); bgX.lineTo(q.x,q.y);
+        bgX.strokeStyle=`rgba(${r},${g},${b2},${a})`;
+        bgX.lineWidth=.8; bgX.stroke();
+      }
+    }
   });
-});
+  requestAnimationFrame(loop);
+})();
 
-// Scroll reveal
-const obs = new IntersectionObserver(entries=>{
-  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
-},{threshold:0.12});
-document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+/* ── TICKER DUPLICATE ─────────────────────── */
+const ticker = document.getElementById('ticker');
+ticker.innerHTML += ticker.innerHTML; // clone for seamless loop
 
-// Parallax text
-const pt = document.getElementById('parText');
-window.addEventListener('scroll',()=>{
-  pt.style.transform = `translateX(${-window.scrollY*0.28}px)`;
-});
+/* ── TELEMETRY CANVAS ─────────────────────── */
+const tc   = document.getElementById('tc');
+const tx   = tc.getContext('2d');
+const HIST = 220;
+const sim  = { spd:160, thr:70, brk:0, rpm:5800, gear:4, gf:.3 };
+let phase=0, phT=0;
+const pDur=[55,28,40,48];
 
-// Count-up
-function countUp(id,target,ms){
-  const el=document.getElementById(id);
-  const step=target/(ms/16);
-  let v=0;
-  const t=setInterval(()=>{
-    v+=step; if(v>=target){el.textContent=target;clearInterval(t);return;}
-    el.textContent=Math.floor(v);
-  },16);
+const channels = [
+  { color:'#e63946', data:[], min:0,   max:290  },
+  { color:'#27c93f', data:[], min:0,   max:100  },
+  { color:'#ff9f43', data:[], min:0,   max:100  },
+  { color:'#4a9eff', data:[], min:-4,  max:4    },
+];
+
+function simStep(){
+  phT++; if(phT>pDur[phase]){phT=0;phase=(phase+1)%4;}
+  const s=sim,p=phase,pr=phT/pDur[p];
+  if(p===0){s.thr=Math.min(100,s.thr+4);s.brk=Math.max(0,s.brk-6);s.spd=Math.min(280,s.spd+2.8);s.rpm=Math.min(8200,s.rpm+180);s.gear=s.spd>220?6:s.spd>165?5:s.spd>120?4:3;s.gf=.15+Math.sin(phT*.12)*.08;}
+  else if(p===1){s.thr=Math.max(0,s.thr-12);s.brk=Math.min(100,s.brk+9);s.spd=Math.max(55,s.spd-7);s.rpm=Math.max(2800,s.rpm-450);s.gear=s.spd>150?4:s.spd>100?3:2;s.gf=2.8+Math.sin(phT*.25)*.5;}
+  else if(p===2){s.thr=15+Math.sin(pr*Math.PI)*18;s.brk=Math.max(0,s.brk-8);s.spd=55+Math.sin(pr*Math.PI)*18;s.rpm=3200+Math.sin(pr*Math.PI)*600;s.gear=2;s.gf=2.2+Math.cos(pr*Math.PI)*1.2;}
+  else{s.thr=Math.min(100,s.thr+9);s.brk=Math.max(0,s.brk-10);s.spd=Math.min(160,s.spd+4.5);s.rpm=Math.min(7600,s.rpm+320);s.gear=s.spd>110?4:s.spd>70?3:2;s.gf=.9-pr*.6;}
+  s.spd+=(Math.random()-.5)*1.2; s.thr+=(Math.random()-.5)*1.5; s.brk+=(Math.random()-.5)*.8;
+  s.thr=Math.max(0,Math.min(100,s.thr)); s.brk=Math.max(0,Math.min(100,s.brk));
+  s.spd=Math.max(45,Math.min(285,s.spd)); s.gf=Math.max(-3.5,Math.min(3.5,s.gf));
 }
-const statsObs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){ countUp('c1',100,1400); countUp('c2',360,1400); statsObs.disconnect(); }
-  });
-},{threshold:0.4});
-statsObs.observe(document.querySelector('.stats-row'));
+for(let i=0;i<HIST;i++){simStep();channels[0].data.push(sim.spd);channels[1].data.push(sim.thr);channels[2].data.push(sim.brk);channels[3].data.push(sim.gf);}
 
-// Nav on scroll
-window.addEventListener('scroll',()=>{
-  document.getElementById('navbar').style.background =
-    window.scrollY>50 ? 'rgba(0,0,0,0.94)' : 'rgba(0,0,0,0.75)';
+function setupTC(){
+  const dpr=devicePixelRatio||1;
+  const w=tc.clientWidth,h=tc.clientHeight;
+  tc.width=w*dpr; tc.height=h*dpr;
+  tx.scale(dpr,dpr);
+}
+
+function drawTC(){
+  const w=tc.clientWidth,h=tc.clientHeight;
+  tx.clearRect(0,0,w,h);
+  // grid
+  tx.strokeStyle='rgba(255,255,255,.04)'; tx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=(h/4)*i;tx.beginPath();tx.moveTo(0,y);tx.lineTo(w,y);tx.stroke();}
+  for(let i=0;i<=10;i++){const x=(w/10)*i;tx.beginPath();tx.moveTo(x,0);tx.lineTo(x,h);tx.stroke();}
+  // channels
+  channels.forEach(ch=>{
+    const data=ch.data,range=ch.max-ch.min;
+    // fill
+    tx.beginPath();
+    for(let i=0;i<data.length;i++){
+      const x=(i/(data.length-1))*w;
+      const y=h-((data[i]-ch.min)/range)*h*.86-h*.04;
+      i===0?tx.moveTo(x,y):tx.lineTo(x,y);
+    }
+    tx.lineTo(w,h);tx.lineTo(0,h);tx.closePath();
+    const g=tx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,ch.color+'28'); g.addColorStop(1,ch.color+'00');
+    tx.fillStyle=g; tx.fill();
+    // line
+    tx.beginPath();
+    for(let i=0;i<data.length;i++){
+      const x=(i/(data.length-1))*w;
+      const y=h-((data[i]-ch.min)/range)*h*.86-h*.04;
+      i===0?tx.moveTo(x,y):tx.lineTo(x,y);
+    }
+    tx.shadowBlur=8; tx.shadowColor=ch.color;
+    tx.strokeStyle=ch.color; tx.lineWidth=2; tx.lineJoin='round';
+    tx.stroke(); tx.shadowBlur=0;
+  });
+  // playhead
+  tx.beginPath(); tx.moveTo(w-2,0); tx.lineTo(w-2,h);
+  tx.shadowBlur=16; tx.shadowColor='rgba(230,57,70,1)';
+  tx.strokeStyle='rgba(230,57,70,.9)'; tx.lineWidth=2; tx.stroke(); tx.shadowBlur=0;
+}
+
+function tcLoop(){
+  simStep();
+  channels[0].data.push(sim.spd); channels[1].data.push(sim.thr);
+  channels[2].data.push(sim.brk); channels[3].data.push(sim.gf);
+  channels.forEach(c=>{if(c.data.length>HIST)c.data.shift();});
+  document.getElementById('m-spd').textContent  = Math.round(sim.spd);
+  document.getElementById('m-rpm').textContent  = (Math.round(sim.rpm/100)*100).toLocaleString('pt-BR');
+  document.getElementById('m-gear').textContent = sim.gear;
+  document.getElementById('m-gf').textContent   = Math.abs(sim.gf).toFixed(1);
+  drawTC();
+  requestAnimationFrame(tcLoop);
+}
+setTimeout(()=>{ setupTC(); tcLoop(); }, 150);
+window.addEventListener('resize',()=>setTimeout(setupTC,100),{passive:true});
+
+/* ── INTERSECTION OBSERVERS ──────────────── */
+// Reveal
+const ro = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.rev,.rev-left,.rev-right').forEach(el=>ro.observe(el));
+
+// Stat cells
+const so = new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('lit'); });
+},{threshold:.4});
+document.querySelectorAll('.stat-cell').forEach(el=>so.observe(el));
+
+// Counter
+const co = new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(!e.isIntersecting)return;
+    const el=e.target, to=parseInt(el.dataset.to), suf=el.dataset.suf||'';
+    if(isNaN(to))return;
+    let t0=null; const dur=1500;
+    (function step(ts){
+      if(!t0)t0=ts;
+      const p=Math.min((ts-t0)/dur,1),ease=1-Math.pow(1-p,3);
+      el.textContent=Math.floor(ease*to)+suf;
+      p<1?requestAnimationFrame(step):el.textContent=to+suf;
+    })(performance.now());
+    co.unobserve(el);
+  });
+},{threshold:.6});
+document.querySelectorAll('.stat-n[data-to]').forEach(el=>co.observe(el));
+
+/* ── 3D TILT on eco cards ─────────────────── */
+document.querySelectorAll('.eco-card').forEach(card=>{
+  const inner = card.querySelector('.eco-inner');
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    inner.style.transform=`perspective(700px) rotateY(${x*10}deg) rotateX(${-y*7}deg) translateZ(6px)`;
+    inner.style.transition='transform .05s';
+  });
+  card.addEventListener('mouseleave',()=>{
+    inner.style.transform='';
+    inner.style.transition='transform .6s cubic-bezier(.4,0,.2,1)';
+  });
 });
+
+/* ── FORMAT CARD stagger ─────────────────── */
+const fmtObs = new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting){
+      setTimeout(()=>e.target.classList.add('in'), i*90);
+      fmtObs.unobserve(e.target);
+    }
+  });
+},{threshold:.1});
+document.querySelectorAll('.fmt').forEach(el=>fmtObs.observe(el));
+
 </script>
 </body>
 </html>
